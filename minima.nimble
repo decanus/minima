@@ -1,7 +1,7 @@
 # Package
 
 version       = "0.1.0"
-author        = "decanus"
+author        = "Dean Eigenmann <dean@eigenmann.me>"
 description   = "MinimaDB: An embeddable database written in Nim."
 license       = "MIT"
 srcDir        = "src"
