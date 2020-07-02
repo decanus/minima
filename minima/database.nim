@@ -15,13 +15,17 @@ proc open*(file: string): Database =
     discard 
 
 proc get*(db: Database, key: seq[byte]): seq[byte] =
+    ## Retrieve a value if it exists. 
     discard
 
 proc set*(db: Database, key: seq[byte], value: seq[byte]) =
+    ## Set a value for a key.
     discard
 
 proc has*(db: Database, key: seq[byte]): bool =
+    ## Check whether a value has been set for a key.
     discard
 
-proc remove*(db: Database, key: seq[byte], value: seq[byte]) =
+proc remove*(db: Database, key: seq[byte]) =
+    ## Remove the set value for a key.
     discard
