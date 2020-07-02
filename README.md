@@ -5,7 +5,11 @@
 MinimaDB: An embeddable database written in Nim.
 
 ```nim
-let db = open("/tmp/minima")
+let result = open("/tmp/minima")
+if not result.isOk:
+    return
+
+db = result.value
 
 let key = [byte 1, 2, 3, 4]
 
