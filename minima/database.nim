@@ -5,12 +5,13 @@
 
 ## This module implements Minima's basic key value database.
 
-import stew/results, os
+import stew/results, os, io
 
 type 
     ## Database object
     Database* = ref object
         dir: string # @TODO: we probably want this somehow else.
+        log: File
 
     DatabaseError* = enum
         DirectoryCreationFailed = "minima: failed to create db directory"
@@ -20,16 +21,25 @@ type
 proc open*(dir: string): Result[Database, DatabaseError] =
     ## Opens a database at the specified path.
     ## This will create a new directory if it does not yet exist.
-    
+    ##
+    ## .. code-block::
+    ##
+    ## let result = open("/tmp/minima")
+    ## if not result.isOk:
+    ##     return
     if not os.existsDir(dir):
         try:
             os.createDir(dir)
         except:
             return err(DirectoryCreationFailed)
 
-    var db: Database
+    var log: File
+    try:
+        log = open((dir & "/minima.db"), fmReadWrite)
+    except:
+        return err(TreeFileCreationFailed)
 
-    ok(db) 
+    ok(Database(dir: dir, log: log))
 
 proc close*(db: Database) =
     ## Closes the database.
