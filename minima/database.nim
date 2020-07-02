@@ -22,6 +22,10 @@ proc open*(file: string): OpenResult =
     ## This will create a new directory if it does not yet exist.
     discard 
 
+proc close*(db: Database) =
+    ## Closes the database.
+    discard
+
 proc get*(db: Database, key: seq[byte]): GetResult =
     ## Retrieve a value if it exists. 
     discard
