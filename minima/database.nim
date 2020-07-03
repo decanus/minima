@@ -68,6 +68,11 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
 
 proc has*(db: Database, key: seq[byte]): bool =
     ## Check whether a value has been set for a key.
+    ## .. code-block::
+    ##
+    ## let key = [byte 1, 2, 3, 4]
+    ## db.set(key, [byte 4, 3, 2, 1]])
+    ## assert(db.has(key))
     db.tree.contains(key)
 
 proc remove*(db: Database, key: seq[byte]): Result[void, DatabaseError] =
