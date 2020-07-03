@@ -51,8 +51,14 @@ proc close*(db: Database) =
     discard
 
 proc get*(db: Database, key: seq[byte]): Result[seq[byte], DatabaseError] =
-    ## Retrieve a value if it exists. 
-    discard
+    ## Retrieve a value if it exists.
+    ## .. code-block::
+    ##
+    ## let key = [byte 1, 2, 3, 4]
+    ## let value = [byte 4, 3, 2, 1]
+    ## db.set(key, value)
+    ## assert(db.get(key) == value)
+    ok(db.tree.getOrDefault(key))
 
 proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, DatabaseError] =
     ## Set a value for a key.
