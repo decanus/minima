@@ -30,6 +30,7 @@ proc initBTree*[Key, Val](): BTree[Key, Val] =
 template less(a, b): bool = cmp(a, b) < 0
 template eq(a, b): bool = cmp(a, b) == 0
 
+# @TODO this should throw in the future, so we know if a key exists. Default isn't good enough, what if we set nil?
 proc getOrDefault*[Key, Val](b: BTree[Key, Val], key: Key): Val =
     var x = b.root
     while x.isInternal:

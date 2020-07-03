@@ -17,6 +17,7 @@ type
     DatabaseError* = enum
         DirectoryCreationFailed = "minima: failed to create db directory"
         TreeFileCreationFailed  = "minima: failed to create tree file"
+        KeyNotFound             = "minima: key not found"
 
 # @TODO: Maybe move this func to ../minima.nim
 proc open*(dir: string): Result[Database, DatabaseError] =
@@ -58,6 +59,10 @@ proc get*(db: Database, key: seq[byte]): Result[seq[byte], DatabaseError] =
     ## let value = [byte 4, 3, 2, 1]
     ## db.set(key, value)
     ## assert(db.get(key) == value)
+    let val = db.tree.getOrDefault(key)
+    if val.isEmpty:
+        return err(KeyNotFound)
+
     ok(db.tree.getOrDefault(key))
 
 proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, DatabaseError] =
