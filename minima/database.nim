@@ -68,7 +68,7 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
 
 proc has*(db: Database, key: seq[byte]): bool =
     ## Check whether a value has been set for a key.
-    discard
+    db.tree.contains(key)
 
 proc remove*(db: Database, key: seq[byte]): Result[void, DatabaseError] =
     ## Remove the set value for a key.
