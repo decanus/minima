@@ -5,13 +5,14 @@
 
 ## This module implements Minima's basic key value database.
 
-import stew/results, os, io
+import stew/results, os, io, tree
 
 type 
     ## Database object
     Database* = ref object
         dir: string # @TODO: we probably want this somehow else.
         log: File
+        tree: BTree[seq[byte], seq[byte]]
 
     DatabaseError* = enum
         DirectoryCreationFailed = "minima: failed to create db directory"
@@ -39,7 +40,11 @@ proc open*(dir: string): Result[Database, DatabaseError] =
     except:
         return err(TreeFileCreationFailed)
 
-    ok(Database(dir: dir, log: log))
+    ok(Database(
+        dir: dir,
+        log: log,
+        tree: initBTree[seq[byte], seq[byte]]()
+    ))
 
 proc close*(db: Database) =
     ## Closes the database.
@@ -51,7 +56,15 @@ proc get*(db: Database, key: seq[byte]): Result[seq[byte], DatabaseError] =
 
 proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, DatabaseError] =
     ## Set a value for a key.
-    discard
+    ## .. code-block::
+    ##
+    ## let key = [byte 1, 2, 3, 4]
+    ## let value = [byte 4, 3, 2, 1]
+    ## db.set(key, value)
+    ## assert(db.get(key) == value)
+    db.tree.add(key, value)
+    # @TODO write to log file
+    ok()
 
 proc has*(db: Database, key: seq[byte]): bool =
     ## Check whether a value has been set for a key.
