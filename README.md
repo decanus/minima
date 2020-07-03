@@ -7,6 +7,7 @@ MinimaDB: An embeddable database written in Nim.
 ```nim
 let result = open("/tmp/minima")
 if not result.isOk:
+    echo result.error()
     return
 
 db = result.value
