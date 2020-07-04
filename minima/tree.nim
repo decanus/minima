@@ -102,6 +102,23 @@ proc insert[Key, Val](h: Node[Key, Val], key: Key, val: Val): Node[Key, Val] =
     inc h.entries
     return if h.entries < M: nil else: split(h)
 
+proc remove[Key, Val](h: Node[Key, Val], key: Key): Node[Key, Val] =
+    var v: Val
+    h.insert(key, v)
+
+proc remove*[Key, Value](b: var BTree[Key, Val]; key: Key) =
+    let u = remove(key)
+    inc b.entries
+    if u == nil: return
+
+    # need to split root
+    let t = Node[Key, Val](entries: 2, isInternal: true)
+    t.keys[0] = b.root.keys[0]
+    t.links[0] = b.root
+    t.keys[1] = u.keys[0]
+    t.links[1] = u
+    b.root = t
+
 proc add*[Key, Val](b: var BTree[Key, Val]; key: Key; val: Val) =
     let u = insert(b.root, key, val)
     inc b.entries
