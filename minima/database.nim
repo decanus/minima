@@ -5,7 +5,7 @@
 
 ## This module implements Minima's basic key value database.
 
-import stew/[results, byteutils], os, tree
+import stew/[results, byteutils, endians2], os, tree
 
 type 
     ## Database object
@@ -18,6 +18,20 @@ type
         DirectoryCreationFailed = "minima: failed to create db directory"
         TreeFileCreationFailed  = "minima: failed to create tree file"
         KeyNotFound             = "minima: key not found"
+
+proc log(db: Database, key: seq[byte], value: seq[byte]) =
+    # @TODO WE WILL PROBABLY WANNA FIX THIS TO NOT DISCARD SHIT
+    discard db.log.writeBytes(@(uint32(len(key).toU32).toBytes), 0, 4)
+    discard db.log.writeBytes(@(uint32(len(value).toU32).toBytes), 0, 4)
+    discard db.log.writeBytes(key, 0, len(key))
+    discard db.log.writeBytes(value, 0, len(value))
+    db.log.flushFile()
+
+#proc recover(db: Database) =
+#    var i = 0
+#    while i <= db.log.getFileSize():
+#        var keyLenArr: seq[byte] = @[]
+#        db.log.readBytes(keyLenArr)
 
 # @TODO: Maybe move this func to ../minima.nim
 proc open*(dir: string): Result[Database, DatabaseError] =
@@ -38,8 +52,8 @@ proc open*(dir: string): Result[Database, DatabaseError] =
     # @TODO we need to check if the file exists
     var path = dir & "/minima.db"
     var mode = fmReadWrite
-    # if fileExists(path):
-    #    mode = fmReadWriteExisting
+    if fileExists(path):
+        mode = fmReadWriteExisting
 
     var log: File
     try:
@@ -47,21 +61,21 @@ proc open*(dir: string): Result[Database, DatabaseError] =
     except:
         return err(TreeFileCreationFailed)
 
-    ok(Database(
+    var db = Database(
         dir: dir,
         log: log,
         tree: initBTree[string, seq[byte]]()
-    ))
+    )
 
-proc log(db: Database, key: seq[byte], value: seq[byte]) =
-    let keyString = string.fromBytes(key)
-    let valueString = string.fromBytes(value)
+    if mode == fmReadWriteExisting:
+        recover(db)
+        db.log.setFilePos(log.getFileSize() - 1)
 
-    db.log.write($len(keyString) & "-" & $len(valueString) & keyString & valueString)
+    ok(db)
 
 proc close*(db: Database) =
     ## Closes the database.
-    discard
+    db.log.close()
 
 proc get*(db: Database, key: seq[byte]): Result[seq[byte], DatabaseError] =
     ## Retrieve a value if it exists.
@@ -86,7 +100,7 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
     ## db.set(key, value)
     ## assert(db.get(key) == value)
     db.tree.add(string.fromBytes(key), value)
-    # log(db, key, value)
+    log(db, key, value)
     ok()
 
 proc has*(db: Database, key: seq[byte]): bool =

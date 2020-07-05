@@ -22,6 +22,8 @@ suite "Database Test Suite":
             getResult.isOk
             getResult.value == value
 
+        #db.close()
+
     test "has returns expected value":
         var result = database.open("/tmp")
         check:
@@ -29,10 +31,12 @@ suite "Database Test Suite":
 
         var db = result.value
 
-        let key = @[byte 1, 2, 3, 4]
+        let key = @[byte 1, 2, 3, 4, 5]
         check:
             not db.has(key)
 
         discard db.set(key, key)
         check:
             db.has(key)
+
+        #db.close()
