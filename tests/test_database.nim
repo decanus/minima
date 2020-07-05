@@ -47,14 +47,58 @@ suite "Database Test Suite":
 
         db.close()
 
-        var result2 = database.open("/tmp")
+        var res = database.open("/tmp")
         check:
-            result2.isOk
+            res.isOk
 
-        var newDB = result.value
+        db = res.value
 
         for val in vals:
-            var getResult = newDB.get(val)
+            var getResult = db.get(val)
+            check:
+                getResult.isOk
+                getResult.value == val
+
+    test "writes correctly to recovered file":
+        let vals = [@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 4, 5], @[byte 1, 2, 3, 4, 5, 6]]
+
+        for val in vals:
+            discard db.set(val, val)
+
+        db.close()
+
+        var res = database.open("/tmp")
+        check:
+            res.isOk
+
+        db = res.value
+
+        for val in vals:
+            var getResult = db.get(val)
+            check:
+                getResult.isOk
+                getResult.value == val
+
+        let newVals = [@[byte 1, 2, 3, 4, 5, 6, 7], @[byte 1, 2, 3, 4, 5, 6, 7, 8]]
+        for val in newVals:
+            discard db.set(val, val)
+        
+        db.close()
+
+        res = database.open("/tmp")
+        check:
+            res.isOk
+
+        db = res.value
+
+        for val in vals:
+            var getResult = db.get(val)
+            check:
+                getResult.isOk
+                getResult.value == val
+
+        for val in newVals:
+            var getResult = db.get(val)
             check:
                 getResult.isOk
                 getResult.value == val

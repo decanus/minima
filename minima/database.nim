@@ -20,12 +20,9 @@ type
         KeyNotFound             = "minima: key not found"
 
 proc log(db: Database, key: seq[byte], value: seq[byte]) =
-    # @TODO WE WILL PROBABLY WANNA FIX THIS TO NOT DISCARD SHIT
-    # @TODO THIS SHIT IS NOT PRETTY
-
     let write = concat(
-        @(uint32(len(key).toU32).toBytes),
-        @(uint32(len(value).toU32).toBytes),
+        @(uint32(len(key)).toBytes),
+        @(uint32(len(value)).toBytes),
         key,
         value
     )
@@ -33,16 +30,16 @@ proc log(db: Database, key: seq[byte], value: seq[byte]) =
     discard db.log.writeBytes(write, 0, len(write))
     db.log.flushFile()
 
+proc readInt(file: File): int =
+    var arr: array[4, byte]
+    discard file.readBytes(arr, 0, 4)
+
+    return int(uint32.fromBytes(arr))
+
 proc recover(db: Database) =
     while db.log.getFilePos() <= db.log.getFileSize() - 1:
-        var keyLenArr: array[4, byte]
-        discard db.log.readBytes(keyLenArr, 0, 4)
-
-        var valueLenArr: array[4, byte]
-        discard db.log.readBytes(valueLenArr, 0, 4)
-
-        let keyLen = int(uint32.fromBytes(keyLenArr))
-        let valLen = int(uint32.fromBytes(valueLenArr))
+        var keyLen = readInt(db.log)
+        var valLen = readInt(db.log)
 
         var key = newSeq[byte](keyLen)
         discard db.log.readBytes(key, 0, keyLen)
@@ -68,7 +65,6 @@ proc open*(dir: string): Result[Database, DatabaseError] =
         except:
             return err(DirectoryCreationFailed)
 
-    # @TODO we need to check if the file exists
     var path = dir & "/minima.db"
     var mode = fmReadWrite
     if fileExists(path):
@@ -88,7 +84,6 @@ proc open*(dir: string): Result[Database, DatabaseError] =
 
     if mode == fmReadWriteExisting:
         recover(db)
-        #db.log.setFilePos(log.getFileSize() - 1)
 
     ok(db)
 
