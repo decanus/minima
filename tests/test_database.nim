@@ -103,16 +103,16 @@ suite "Database Test Suite":
                 getResult.isOk
                 getResult.value == val
 
-    # test "can overwrite values":
-    #     let key = @[byte 1, 2, 3, 4]
+    test "can overwrite values":
+        let key = @[byte 1, 2, 3, 4]
 
-    #     discard db.set(key, key)
+        discard db.set(key, key)
 
-    #     check:
-    #         db.has(key)
+        check:
+            db.has(key)
 
-    #     discard db.set(key, @[byte 1, 2])
+        discard db.set(key, @[byte 1, 2])
 
-    #     var res = db.get(key)
-    #     check:
-    #         res.value == @[byte 1, 2]
+        var res = db.get(key)
+        check:
+            res.value == @[byte 1, 2]
