@@ -5,14 +5,14 @@
 
 ## This module implements Minima's basic key value database.
 
-import stew/results, os, io, tree
+import stew/[results, byteutils], os, tree
 
 type 
     ## Database object
     Database* = ref object
         dir: string # @TODO: we probably want this somehow else.
         log: File
-        tree: BTree[seq[byte], seq[byte]]
+        tree: BTree[string, seq[byte]]
 
     DatabaseError* = enum
         DirectoryCreationFailed = "minima: failed to create db directory"
@@ -44,7 +44,7 @@ proc open*(dir: string): Result[Database, DatabaseError] =
     ok(Database(
         dir: dir,
         log: log,
-        tree: initBTree[seq[byte], seq[byte]]()
+        tree: initBTree[string, seq[byte]]()
     ))
 
 proc close*(db: Database) =
@@ -59,11 +59,11 @@ proc get*(db: Database, key: seq[byte]): Result[seq[byte], DatabaseError] =
     ## let value = [byte 4, 3, 2, 1]
     ## db.set(key, value)
     ## assert(db.get(key) == value)
-    let val = db.tree.getOrDefault(key)
-    if val.isEmpty:
+    let val = db.tree.getOrDefault(string.fromBytes(key))
+    if val.len == 0:
         return err(KeyNotFound)
 
-    ok(db.tree.getOrDefault(key))
+    ok(val)
 
 proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, DatabaseError] =
     ## Set a value for a key.
@@ -73,7 +73,7 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
     ## let value = [byte 4, 3, 2, 1]
     ## db.set(key, value)
     ## assert(db.get(key) == value)
-    db.tree.add(key, value)
+    db.tree.add(string.fromBytes(key), value)
     # @TODO write to log file
     ok()
 
@@ -84,9 +84,9 @@ proc has*(db: Database, key: seq[byte]): bool =
     ## let key = [byte 1, 2, 3, 4]
     ## db.set(key, [byte 4, 3, 2, 1]])
     ## assert(db.has(key))
-    db.tree.contains(key)
+    db.tree.contains(string.fromBytes(key))
 
 proc remove*(db: Database, key: seq[byte]): Result[void, DatabaseError] =
     ## Remove the set value for a key.
-    db.remove(key)
+    db.tree.remove(string.fromBytes(key))
     ok()
