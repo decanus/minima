@@ -88,8 +88,8 @@ proc has*(db: Database, key: seq[byte]): bool =
 
 proc remove*(db: Database, key: seq[byte]): Result[void, DatabaseError] =
     ## Remove the set value for a key.
-    ## db.tree.remove(string.fromBytes(key))
-    ## ok()
+    db.tree.remove(string.fromBytes(key))
+    ok()
 
     # @TODO MAKE THIS WORK
-    discard
+    #discard
