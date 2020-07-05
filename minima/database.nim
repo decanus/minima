@@ -5,7 +5,7 @@
 
 ## This module implements Minima's basic key value database.
 
-import stew/[results, byteutils, endians2], os, tree
+import stew/[results, byteutils, endians2], os, tree, sequtils
 
 type 
     ## Database object
@@ -21,17 +21,36 @@ type
 
 proc log(db: Database, key: seq[byte], value: seq[byte]) =
     # @TODO WE WILL PROBABLY WANNA FIX THIS TO NOT DISCARD SHIT
-    discard db.log.writeBytes(@(uint32(len(key).toU32).toBytes), 0, 4)
-    discard db.log.writeBytes(@(uint32(len(value).toU32).toBytes), 0, 4)
-    discard db.log.writeBytes(key, 0, len(key))
-    discard db.log.writeBytes(value, 0, len(value))
+    # @TODO THIS SHIT IS NOT PRETTY
+
+    let write = concat(
+        @(uint32(len(key).toU32).toBytes),
+        @(uint32(len(value).toU32).toBytes),
+        key,
+        value
+    )
+
+    discard db.log.writeBytes(write, 0, len(write))
     db.log.flushFile()
 
-#proc recover(db: Database) =
-#    var i = 0
-#    while i <= db.log.getFileSize():
-#        var keyLenArr: seq[byte] = @[]
-#        db.log.readBytes(keyLenArr)
+proc recover(db: Database) =
+    while db.log.getFilePos() <= db.log.getFileSize() - 1:
+        var keyLenArr: array[4, byte]
+        discard db.log.readBytes(keyLenArr, 0, 4)
+
+        var valueLenArr: array[4, byte]
+        discard db.log.readBytes(valueLenArr, 0, 4)
+
+        let keyLen = int(uint32.fromBytes(keyLenArr))
+        let valLen = int(uint32.fromBytes(valueLenArr))
+
+        var key = newSeq[byte](keyLen)
+        discard db.log.readBytes(key, 0, keyLen)
+
+        var val = newSeq[byte](valLen)
+        discard db.log.readBytes(val, 0, valLen)
+
+        db.tree.add(string.fromBytes(key), val)
 
 # @TODO: Maybe move this func to ../minima.nim
 proc open*(dir: string): Result[Database, DatabaseError] =
@@ -69,7 +88,7 @@ proc open*(dir: string): Result[Database, DatabaseError] =
 
     if mode == fmReadWriteExisting:
         recover(db)
-        db.log.setFilePos(log.getFileSize() - 1)
+        #db.log.setFilePos(log.getFileSize() - 1)
 
     ok(db)
 

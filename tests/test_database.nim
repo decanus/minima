@@ -1,9 +1,11 @@
 import unittest
 
-import ../minima/database, stew/results
+import ../minima/database, stew/results, os
 
 suite "Database Test Suite":
     test "can set and get key":
+        removeFile("/tmp/minima.db")
+
         var result = database.open("/tmp")
         check:
             result.isOk
@@ -22,9 +24,9 @@ suite "Database Test Suite":
             getResult.isOk
             getResult.value == value
 
-        #db.close()
-
     test "has returns expected value":
+        removeFile("/tmp/minima.db")
+
         var result = database.open("/tmp")
         check:
             result.isOk
@@ -39,4 +41,30 @@ suite "Database Test Suite":
         check:
             db.has(key)
 
-        #db.close()
+    test "recover works":
+        removeFile("/tmp/minima.db")
+
+        var result = database.open("/tmp")
+        check:
+            result.isOk
+
+        var db = result.value
+
+        let vals = [@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 4, 5], @[byte 1, 2, 3, 4, 5, 6]]
+
+        for val in vals:
+            discard db.set(val, val)
+
+        db.close()
+
+        var result2 = database.open("/tmp")
+        check:
+            result2.isOk
+
+        var newDB = result.value
+
+        for val in vals:
+            var getResult = newDB.get(val)
+            check:
+                getResult.isOk
+                getResult.value == val
