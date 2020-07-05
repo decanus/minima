@@ -3,14 +3,20 @@ import unittest
 import ../minima/database, stew/results, os
 
 suite "Database Test Suite":
-    test "can set and get key":
-        removeFile("/tmp/minima.db")
 
+    var db: Database
+
+    setup:
         var result = database.open("/tmp")
         check:
-            result.isOk
+            result.isOk 
 
-        var db = result.value
+        db = result.value
+
+    teardown:
+        removeFile("/tmp/minima.db")
+
+    test "can set and get key":
         let key = @[byte 1, 2, 3, 4]
         let value = @[byte 4, 3, 2, 1]
         
@@ -25,14 +31,6 @@ suite "Database Test Suite":
             getResult.value == value
 
     test "has returns expected value":
-        removeFile("/tmp/minima.db")
-
-        var result = database.open("/tmp")
-        check:
-            result.isOk
-
-        var db = result.value
-
         let key = @[byte 1, 2, 3, 4, 5]
         check:
             not db.has(key)
@@ -42,14 +40,6 @@ suite "Database Test Suite":
             db.has(key)
 
     test "recover works":
-        removeFile("/tmp/minima.db")
-
-        var result = database.open("/tmp")
-        check:
-            result.isOk
-
-        var db = result.value
-
         let vals = [@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 4, 5], @[byte 1, 2, 3, 4, 5, 6]]
 
         for val in vals:
