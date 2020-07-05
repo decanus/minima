@@ -27,6 +27,7 @@ proc log(db: Database, key: seq[byte], value: seq[byte]) =
         value
     )
 
+    # @TODO CATCH EXCEPTIONS
     discard db.log.writeBytes(write, 0, len(write))
     db.log.flushFile()
 
@@ -40,6 +41,8 @@ proc recover(db: Database) =
     while db.log.getFilePos() <= db.log.getFileSize() - 1:
         var keyLen = readInt(db.log)
         var valLen = readInt(db.log)
+
+        # @TODO CATCH EXCEPTIONS
 
         var key = newSeq[byte](keyLen)
         discard db.log.readBytes(key, 0, keyLen)
