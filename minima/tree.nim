@@ -102,9 +102,10 @@ proc insert[Key, Val](h: Node[Key, Val], key: Key, val: Val): Node[Key, Val] =
     inc h.entries
     return if h.entries < M: nil else: split(h)
 
-proc remove*[Key, Val](b: var BTree[Key, Val]; key: Key) =
-    var val: Val
-    b.add(key, val)
+# @TODO MAKE THIS WORK
+# proc remove*[Key, Val](b: var BTree[Key, Val]; key: Key) =
+#    var val: Val
+#    b.add(key, val)
 
 proc add*[Key, Val](b: var BTree[Key, Val]; key: Key; val: Val) =
     let u = insert(b.root, key, val)
