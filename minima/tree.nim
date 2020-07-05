@@ -22,7 +22,7 @@ type
             links: array[M, Node[Key, Val]]
     BTree*[Key, Val] = object
         root: Node[Key, Val]
-        entries: int            ## number of key-value pairs
+        entries*: int            ## number of key-value pairs
 
 proc initBTree*[Key, Val](): BTree[Key, Val] =
     BTree[Key, Val](root: Node[Key, Val](entries: 0, isInternal: false))
@@ -71,7 +71,6 @@ proc split[Key, Val](h: Node[Key, Val]): Node[Key, Val] =
     copyHalf(h, result)
 
 proc insert[Key, Val](h: Node[Key, Val], key: Key, val: Val): Node[Key, Val] =
-    #var t = Entry(key: key, val: val, next: nil)
     var newKey = key
     var j = 0
     if not h.isInternal:
