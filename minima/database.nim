@@ -85,11 +85,3 @@ proc has*(db: Database, key: seq[byte]): bool =
     ## db.set(key, [byte 4, 3, 2, 1]])
     ## assert(db.has(key))
     db.tree.contains(string.fromBytes(key))
-
-proc remove*(db: Database, key: seq[byte]): Result[void, DatabaseError] =
-    ## Remove the set value for a key.
-    db.tree.remove(string.fromBytes(key))
-    ok()
-
-    # @TODO MAKE THIS WORK
-    #discard
