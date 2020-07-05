@@ -35,9 +35,15 @@ proc open*(dir: string): Result[Database, DatabaseError] =
         except:
             return err(DirectoryCreationFailed)
 
+    # @TODO we need to check if the file exists
+    var path = dir & "/minima.db"
+    var mode = fmReadWrite
+    # if fileExists(path):
+    #    mode = fmReadWriteExisting
+
     var log: File
     try:
-        log = open((dir & "/minima.db"), fmReadWrite)
+        log = open(path, mode)
     except:
         return err(TreeFileCreationFailed)
 
@@ -46,6 +52,12 @@ proc open*(dir: string): Result[Database, DatabaseError] =
         log: log,
         tree: initBTree[string, seq[byte]]()
     ))
+
+proc log(db: Database, key: seq[byte], value: seq[byte]) =
+    let keyString = string.fromBytes(key)
+    let valueString = string.fromBytes(value)
+
+    db.log.write($len(keyString) & "-" & $len(valueString) & keyString & valueString)
 
 proc close*(db: Database) =
     ## Closes the database.
@@ -74,7 +86,7 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
     ## db.set(key, value)
     ## assert(db.get(key) == value)
     db.tree.add(string.fromBytes(key), value)
-    # @TODO write to log file
+    # log(db, key, value)
     ok()
 
 proc has*(db: Database, key: seq[byte]): bool =
