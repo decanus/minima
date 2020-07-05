@@ -18,6 +18,7 @@ type
         DirectoryCreationFailed = "minima: failed to create db directory"
         TreeFileCreationFailed  = "minima: failed to create tree file"
         KeyNotFound             = "minima: key not found"
+        PersistenceFailed       = "minima: persistence failed"
 
 proc log(db: Database, key: seq[byte], value: seq[byte]) =
     let write = concat(
@@ -117,7 +118,12 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
     ## db.set(key, value)
     ## assert(db.get(key) == value)
     db.tree.add(string.fromBytes(key), value)
-    log(db, key, value)
+
+    try:
+        log(db, key, value)
+    except:
+        return err(PersistenceFailed)
+    
     ok()
 
 proc has*(db: Database, key: seq[byte]): bool =
