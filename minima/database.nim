@@ -141,3 +141,23 @@ proc has*(db: Database, key: seq[byte]): bool =
     ##   db.set(key, [byte 4, 3, 2, 1]])
     ##   assert(db.has(key))
     db.tree.contains(string.fromBytes(key))
+
+proc tag*(db: Database, key: seq[byte], tag: seq[byte]) =
+    ## Adds a tag to a specific key.
+    discard
+
+proc tags*(db: Database): seq[seq[byte]] =
+    ## Returns all the tags currently stored in the database.
+    discard
+
+iterator filter*(db: Database, tag: seq[byte]): (seq[byte], seq[byte]) =
+    ## Returns all K, V pairs that have been tagged.
+    discard
+
+iterator intersection*(db: Database, tags: seq[seq[byte]]): (seq[byte], seq[byte]) =
+    ## Returns all K, V pairs that are in the intersection of the passed tags.
+    discard
+
+iterator union*(db: Database, tags: seq[seq[byte]]): (seq[byte], seq[byte]) =
+    ## Returns all K, V pairs that are the union of the passed tags.
+    discard
