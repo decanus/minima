@@ -1,0 +1,11 @@
+Database	minima/database.html#Database	database: Database	
+DirectoryCreationFailed	minima/database.html#DirectoryCreationFailed	DatabaseError.DirectoryCreationFailed	
+TreeFileCreationFailed	minima/database.html#TreeFileCreationFailed	DatabaseError.TreeFileCreationFailed	
+KeyNotFound	minima/database.html#KeyNotFound	DatabaseError.KeyNotFound	
+PersistenceFailed	minima/database.html#PersistenceFailed	DatabaseError.PersistenceFailed	
+DatabaseError	minima/database.html#DatabaseError	database: DatabaseError	
+open	minima/database.html#open,string	database: open(dir: string): Result[Database, DatabaseError]	
+close	minima/database.html#close,Database	database: close(db: Database)	
+get	minima/database.html#get,Database,seq[byte]	database: get(db: Database; key: seq[byte]): Result[seq[byte], DatabaseError]	
+set	minima/database.html#set,Database,seq[byte],seq[byte]	database: set(db: Database; key: seq[byte]; value: seq[byte]): Result[void, DatabaseError]	
+has	minima/database.html#has,Database,seq[byte]	database: has(db: Database; key: seq[byte]): bool	
