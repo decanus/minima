@@ -150,9 +150,9 @@ proc tag*(db: Database, key: seq[byte], tag: seq[byte]) =
     ## Example:
     ##
     ## .. code-block::
-    ## let key = [byte 1, 2, 3, 4]
-    ## db.set(key, [byte 1, 2, 3, 4, 5])
-    ## db.tag(key, [byte 1, 2, 3])
+    ## let key = @[byte 1, 2, 3, 4]
+    ## db.set(key, @[byte 1, 2, 3, 4, 5])
+    ## db.tag(key, @[byte 1, 2, 3])
     let t = string.fromBytes(tag)
     discard db.tags.hasKeyOrPut(t, initHashSet[seq[byte]]())
 
