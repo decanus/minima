@@ -18,7 +18,7 @@
 ## 
 ## **This software is still pre-alpha, and should not be considered reliable.** 
 ## Here are some caveats that should be taken into consideration when using Minima:
-## 1. The maximum length of both keys and values are **2^32-1** this is because we internally use **uint32**s to represent the length of both fields. 
+## 1. The maximum length of both keys and values are **2^32-1** this is because we internally use uint32s to represent the length of both fields. 
 
 import minima/database
 export database
