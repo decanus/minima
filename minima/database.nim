@@ -57,11 +57,12 @@ proc recover(db: Database) =
 proc open*(dir: string): Result[Database, DatabaseError] =
     ## Opens a database at the specified path.
     ## This will create a new directory if it does not yet exist.
+    ## 
+    ## Example:
     ##
     ## .. code-block::
-    ##
-    ## let result = open("/tmp/minima")
-    ## if not result.isOk:
+    ##   let result = open("/tmp/minima")
+    ##   if not result.isOk:
     ##     return
     if not os.existsDir(dir):
         try:
@@ -97,12 +98,14 @@ proc close*(db: Database) =
 
 proc get*(db: Database, key: seq[byte]): Result[seq[byte], DatabaseError] =
     ## Retrieve a value if it exists.
+    ## 
+    ## Example:
+    ## 
     ## .. code-block::
-    ##
-    ## let key = [byte 1, 2, 3, 4]
-    ## let value = [byte 4, 3, 2, 1]
-    ## db.set(key, value)
-    ## assert(db.get(key) == value)
+    ##   let key = [byte 1, 2, 3, 4]
+    ##   let value = [byte 4, 3, 2, 1]
+    ##   db.set(key, value)
+    ##   assert(db.get(key) == value)
     let val = db.tree.getOrDefault(string.fromBytes(key))
     if val.len == 0:
         return err(KeyNotFound)
@@ -111,12 +114,14 @@ proc get*(db: Database, key: seq[byte]): Result[seq[byte], DatabaseError] =
 
 proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, DatabaseError] =
     ## Set a value for a key.
+    ## 
+    ## Example:
+    ## 
     ## .. code-block::
-    ##
-    ## let key = [byte 1, 2, 3, 4]
-    ## let value = [byte 4, 3, 2, 1]
-    ## db.set(key, value)
-    ## assert(db.get(key) == value)
+    ##   let key = [byte 1, 2, 3, 4]
+    ##   let value = [byte 4, 3, 2, 1]
+    ##   db.set(key, value)
+    ##   assert(db.get(key) == value)
     db.tree.add(string.fromBytes(key), value)
 
     try:
@@ -128,9 +133,11 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
 
 proc has*(db: Database, key: seq[byte]): bool =
     ## Check whether a value has been set for a key.
+    ## 
+    ## Example:
+    ## 
     ## .. code-block::
-    ##
-    ## let key = [byte 1, 2, 3, 4]
-    ## db.set(key, [byte 4, 3, 2, 1]])
-    ## assert(db.has(key))
+    ##   let key = [byte 1, 2, 3, 4]
+    ##   db.set(key, [byte 4, 3, 2, 1]])
+    ##   assert(db.has(key))
     db.tree.contains(string.fromBytes(key))
