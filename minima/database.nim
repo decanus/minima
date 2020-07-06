@@ -156,6 +156,8 @@ proc tag*(db: Database, key: seq[byte], tag: seq[byte]) =
     let t = string.fromBytes(tag)
     discard db.tags.hasKeyOrPut(t, initHashSet[seq[byte]]())
 
+    # @TODO, Tag incl must be logged
+
     db.tags[t].incl(key)
 
 proc tags*(db: Database): seq[seq[byte]] =
