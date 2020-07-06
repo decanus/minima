@@ -5,7 +5,7 @@
 
 ## This module implements Minima's basic key value database.
 
-import stew/[results, byteutils, endians2], os, tree, sequtils
+import stew/[results, byteutils, endians2], os, tree, sequtils, tables, sets
 
 type 
     ## Database object
@@ -13,6 +13,8 @@ type
         dir: string # @TODO: we probably want this somehow else.
         log: File
         tree: BTree[string, seq[byte]]
+
+        tags: Table[string, HashSet[seq[byte]]]
 
     DatabaseError* = enum
         DirectoryCreationFailed = "minima: failed to create db directory"
@@ -133,7 +135,7 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
 
 proc has*(db: Database, key: seq[byte]): bool =
     ## Check whether a value has been set for a key.
-    ## 
+    ##
     ## Example:
     ## 
     ## .. code-block::
@@ -144,7 +146,17 @@ proc has*(db: Database, key: seq[byte]): bool =
 
 proc tag*(db: Database, key: seq[byte], tag: seq[byte]) =
     ## Adds a tag to a specific key.
-    discard
+    ##
+    ## Example:
+    ##
+    ## .. code-block::
+    ## let key = [byte 1, 2, 3, 4]
+    ## db.set(key, [byte 1, 2, 3, 4, 5])
+    ## db.tag(key, [byte 1, 2, 3])
+    let t = string.fromBytes(tag)
+    discard db.tags.hasKeyOrPut(t, initHashSet[seq[byte]]())
+
+    db.tags[t].incl(key)
 
 proc tags*(db: Database): seq[seq[byte]] =
     ## Returns all the tags currently stored in the database.
