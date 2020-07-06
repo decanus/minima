@@ -13,6 +13,26 @@
 ##   if not result.isOk:
 ##     return
 ## 
+##   let db = result.value
+## 
+## Inserting data
+## --------------
+## 
+## .. code-block::
+##   let result = db.set(@[byte 1, 2, 3, 4], @[byte 1, 2, 3])
+##   if not result.isOk
+##     echo result.error
+## 
+## Reading data
+## ------------
+## .. code-block::
+##   let result = db.get(@[byte 1, 2, 3, 4])
+##   if not result.isOk
+##     echo result.error
+##     return
+## 
+##   echo result.value
+## 
 ## Notes
 ## =====
 ## 
