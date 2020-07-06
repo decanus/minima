@@ -1,6 +1,6 @@
 # minima
 
-![Test](https://github.com/decanus/minima/workflows/Test/badge.svg)
+[![Test](https://github.com/decanus/minima/workflows/Test/badge.svg)](https://github.com/decanus/minima/actions?query=workflow%3ATest)
 
 MinimaDB: An embeddable database written in Nim.
 
