@@ -2,6 +2,14 @@ import unittest
 
 import ../minima/database, stew/results, os
 
+proc checkValues(db: Database, vals: seq[seq[byte]]): bool =
+    for val in vals:
+        var res = db.get(val)
+        if not res.isOk or res.value != val:
+            return false
+
+    return true
+
 suite "Database Test Suite":
 
     var db: Database
@@ -40,7 +48,7 @@ suite "Database Test Suite":
             db.has(key)
 
     test "recover works":
-        let vals = [@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 4, 5], @[byte 1, 2, 3, 4, 5, 6]]
+        let vals = @[@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 4, 5], @[byte 1, 2, 3, 4, 5, 6]]
 
         for val in vals:
             discard db.set(val, val)
@@ -53,14 +61,11 @@ suite "Database Test Suite":
 
         db = res.value
 
-        for val in vals:
-            var getResult = db.get(val)
-            check:
-                getResult.isOk
-                getResult.value == val
+        check:
+            checkValues(db, vals)
 
     test "writes correctly to recovered file":
-        let vals = [@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 4, 5], @[byte 1, 2, 3, 4, 5, 6]]
+        let vals = @[@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 4, 5], @[byte 1, 2, 3, 4, 5, 6]]
 
         for val in vals:
             discard db.set(val, val)
@@ -73,13 +78,10 @@ suite "Database Test Suite":
 
         db = res.value
 
-        for val in vals:
-            var getResult = db.get(val)
-            check:
-                getResult.isOk
-                getResult.value == val
+        check:
+            checkValues(db, vals)
 
-        let newVals = [@[byte 1, 2, 3, 4, 5, 6, 7], @[byte 1, 2, 3, 4, 5, 6, 7, 8]]
+        let newVals = @[@[byte 1, 2, 3, 4, 5, 6, 7], @[byte 1, 2, 3, 4, 5, 6, 7, 8]]
         for val in newVals:
             discard db.set(val, val)
         
@@ -91,17 +93,9 @@ suite "Database Test Suite":
 
         db = res.value
 
-        for val in vals:
-            var getResult = db.get(val)
-            check:
-                getResult.isOk
-                getResult.value == val
-
-        for val in newVals:
-            var getResult = db.get(val)
-            check:
-                getResult.isOk
-                getResult.value == val
+        check:
+            checkValues(db, vals)
+            checkValues(db, newVals)
 
     test "can overwrite values":
         let key = @[byte 1, 2, 3, 4]
