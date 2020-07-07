@@ -20,7 +20,7 @@ method close*(log: Log) {.base.} =
 method next*(log: Log): (seq[byte], seq[byte]) {.base.} =
     discard
 
-iterator items*(log: Log): (seq[byte], seq[byte]) =
+iterator pairs*(log: Log): (seq[byte], seq[byte]) =
     while log.file.getFilePos() <= log.file.getFileSize() - 1:
         var (k, v) = log.next()
         yield (k, v)
