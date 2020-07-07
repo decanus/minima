@@ -5,13 +5,13 @@
 
 ## This module implements Minima's basic key value database.
 
-import stew/[results, byteutils, endians2], os, tree, sequtils
+import stew/[results, byteutils], os, tree, log
 
 type 
     ## Database object
     Database* = ref object
         dir: string # @TODO: we probably want this somehow else.
-        log: File
+        log: Log
         tree: BTree[string, seq[byte]]
 
     DatabaseError* = enum
@@ -19,39 +19,6 @@ type
         TreeFileCreationFailed  = "minima: failed to create tree file"
         KeyNotFound             = "minima: key not found"
         PersistenceFailed       = "minima: persistence failed"
-
-proc log(db: Database, key: seq[byte], value: seq[byte]) =
-    let write = concat(
-        @(uint32(len(key)).toBytes),
-        @(uint32(len(value)).toBytes),
-        key,
-        value
-    )
-
-    # @TODO CATCH EXCEPTIONS
-    discard db.log.writeBytes(write, 0, len(write))
-    db.log.flushFile()
-
-proc readInt(file: File): int =
-    var arr: array[4, byte]
-    discard file.readBytes(arr, 0, 4)
-
-    return int(uint32.fromBytes(arr))
-
-proc recover(db: Database) =
-    while db.log.getFilePos() <= db.log.getFileSize() - 1:
-        var keyLen = readInt(db.log)
-        var valLen = readInt(db.log)
-
-        # @TODO CATCH EXCEPTIONS
-
-        var key = newSeq[byte](keyLen)
-        discard db.log.readBytes(key, 0, keyLen)
-
-        var val = newSeq[byte](valLen)
-        discard db.log.readBytes(val, 0, valLen)
-
-        db.tree.add(string.fromBytes(key), val)
 
 proc open*(dir: string, key: string): Result[Database, DatabaseError] =
     ## Opens an encrypted database at the specified path.
@@ -79,20 +46,23 @@ proc open*(dir: string): Result[Database, DatabaseError] =
     if fileExists(path):
         mode = fmReadWriteExisting
 
-    var log: File
+    var f: File
     try:
-        log = open(path, mode)
+        f = open(path, mode)
     except:
         return err(TreeFileCreationFailed)
 
+    var l = UnencryptedLog.init(f)
+
     var db = Database(
         dir: dir,
-        log: log,
+        log: l,
         tree: initBTree[string, seq[byte]]()
     )
 
     if mode == fmReadWriteExisting:
-        recover(db)
+        for (key, val) in db.log.values():
+            db.tree.add(string.fromBytes(key), val)
 
     ok(db)
 
@@ -129,7 +99,7 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
     db.tree.add(string.fromBytes(key), value)
 
     try:
-        log(db, key, value)
+        db.log.log(key, value)
     except:
         return err(PersistenceFailed)
     
