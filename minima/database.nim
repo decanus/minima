@@ -61,7 +61,7 @@ proc open*(dir: string): Result[Database, DatabaseError] =
     )
 
     if mode == fmReadWriteExisting:
-        for (key, val) in db.log.values():
+        for (key, val) in db.log.items():
             db.tree.add(string.fromBytes(key), val)
 
     ok(db)

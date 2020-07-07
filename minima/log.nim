@@ -20,11 +20,10 @@ method close*(log: Log) {.base.} =
 method next*(log: Log): (seq[byte], seq[byte]) {.base.} =
     discard
 
-iterator values*(log: Log): (seq[byte], seq[byte]) =
+iterator items*(log: Log): (seq[byte], seq[byte]) =
     while log.file.getFilePos() <= log.file.getFileSize() - 1:
         var (k, v) = log.next()
         yield (k, v)
-
 
 proc readInt(file: File): int =
     var arr: array[4, byte]
