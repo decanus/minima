@@ -12,7 +12,8 @@ skipDirs      = @["tests"]
 # Dependencies
 
 requires "nim >= 1.2.0",
-         "stew"
+         "stew",
+         "nimAES"
 
 task test, "Run all tests":
   exec "nim c -r --threads:off tests/all_tests"

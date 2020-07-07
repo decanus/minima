@@ -52,7 +52,7 @@ proc open*(dir: string): Result[Database, DatabaseError] =
     except:
         return err(TreeFileCreationFailed)
 
-    var l = UnencryptedLog.init(f)
+    var l = StandardLog.init(f)
 
     var db = Database(
         dir: dir,

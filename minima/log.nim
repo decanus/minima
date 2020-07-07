@@ -3,7 +3,7 @@
 # Copyright (c) 2020 Dean Eigenmann
 # Licensed under MIT license ([LICENSE](LICENSE) or http://opensource.org/licenses/MIT)
 
-import sequtils, stew/endians2
+import sequtils, stew/[byteutils, endians2], nimAES
 
 type 
     Log* = ref object of RootObj
@@ -11,6 +11,7 @@ type
 
     StandardLog* = ref object of Log
     EncryptedLog* = ref object of Log
+        aes: AESContext
 
 method close*(log: Log) {.base.} =
     log.file.close()
@@ -50,8 +51,8 @@ method log*(log: StandardLog, key: seq[byte], value: seq[byte]) =
     log.file.flushFile()
 
 method next*(log: StandardLog): (seq[byte], seq[byte]) =
-    var keyLen = readInt(log.file)
-    var valLen = readInt(log.file)
+    let keyLen = readInt(log.file)
+    let valLen = readInt(log.file)
 
     # @TODO CATCH EXCEPTIONS
 
@@ -64,7 +65,22 @@ method next*(log: StandardLog): (seq[byte], seq[byte]) =
     return (key, val)
 
 method log*(log: EncryptedLog, key: seq[byte], value: seq[byte]) =
-    discard
+    let data = log.aes.encryptECB(pack(key, value).toHex).toBytes()
+
+    discard log.file.writeBytes(@(uint32(len(data)).toBytes), 0, 4)
+    discard log.file.writeBytes(data, 0, len(data))
+    log.file.flushFile()
 
 method next*(log: EncryptedLog): (seq[byte], seq[byte]) =
-    discard
+    let dataLen = readInt(log.file)
+
+    var data = newSeq[byte](dataLen)
+    discard log.file.readBytes(data, 0, dataLen)
+
+    let _ = string.fromBytes(data).hexToSeqByte()
+
+    # @TODO, WHAT WE NEED TO DO IS FROM THE RETURN ABOVE
+    # UNPACK THE pack() RESULT
+
+    return (@[], @[])
+
