@@ -53,6 +53,10 @@ proc recover(db: Database) =
 
         db.tree.add(string.fromBytes(key), val)
 
+proc open*(dir: string, key: string): Result[Database, DatabaseError] =
+    ## Opens an encrypted database at the specified path.
+    discard
+
 # @TODO: Maybe move this func to ../minima.nim
 proc open*(dir: string): Result[Database, DatabaseError] =
     ## Opens a database at the specified path.
