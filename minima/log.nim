@@ -77,10 +77,14 @@ method next*(log: EncryptedLog): (seq[byte], seq[byte]) =
     var data = newSeq[byte](dataLen)
     discard log.file.readBytes(data, 0, dataLen)
 
-    let _ = string.fromBytes(data).hexToSeqByte()
+    let msg = string.fromBytes(data).hexToSeqByte()
 
-    # @TODO, WHAT WE NEED TO DO IS FROM THE RETURN ABOVE
-    # UNPACK THE pack() RESULT
+    var keyLen = uint32.fromBytes(@(msg.toOpenArray(0, 3)))
+    var valLen = uint32.fromBytes(@(msg.toOpenArray(4, 8)))
 
-    return (@[], @[])
+
+    return (
+        @(msg.toOpenArray(9, 9 + int(keyLen))),
+        @(msg.toOpenArray(9 + int(keyLen), 9 + int(keyLen) + int(valLen)))
+    )
 
