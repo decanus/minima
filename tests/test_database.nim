@@ -1,6 +1,6 @@
 import unittest
 
-import ../minima/database, stew/results, os
+import ../minima/database, stew/[results, byteutils], os, sequtils
 
 proc checkValues(db: Database, vals: seq[seq[byte]]): bool =
     for val in vals:
@@ -14,11 +14,14 @@ suite "Database Test Suite":
 
     var db: Database
 
+    var key: array[32, byte]
+    var pass = "Alice Key"
+
     setup:
-        var result = database.open("/tmp")
+        copyMem(addr key[0], addr pass[0], len(pass))
+        var result = database.open("/tmp", key)
         check:
             result.isOk 
-
         db = result.value
 
     teardown:
@@ -55,7 +58,7 @@ suite "Database Test Suite":
 
         db.close()
 
-        var res = database.open("/tmp")
+        var res = database.open("/tmp", key)
         check:
             res.isOk
 
@@ -72,7 +75,7 @@ suite "Database Test Suite":
 
         db.close()
 
-        var res = database.open("/tmp")
+        var res = database.open("/tmp", key)
         check:
             res.isOk
 
@@ -81,21 +84,24 @@ suite "Database Test Suite":
         check:
             checkValues(db, vals)
 
-        let newVals = @[@[byte 1, 2, 3, 4, 5, 6, 7], @[byte 1, 2, 3, 4, 5, 6, 7, 8]]
+        let newVals = @[@[byte 1, 2, 3, 4, 5, 6, 7]]
         for val in newVals:
             discard db.set(val, val)
         
+        db.log.file.setFilePos(0)
+        echo db.log.file.readAll().toBytes
+
         db.close()
 
-        res = database.open("/tmp")
+        res = database.open("/tmp", key)
         check:
-            res.isOk
+             res.isOk
 
         db = res.value
 
         check:
-            checkValues(db, vals)
-            checkValues(db, newVals)
+             checkValues(db, vals)
+             checkValues(db, newVals)
 
     test "can overwrite values":
         let key = @[byte 1, 2, 3, 4]

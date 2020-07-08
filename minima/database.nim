@@ -5,13 +5,13 @@
 
 ## This module implements Minima's basic key value database.
 
-import stew/[results, byteutils], os, tree, log
+import stew/[results, byteutils], os, tree, log, nimcrypto
 
 type 
     ## Database object
     Database* = ref object
         dir: string # @TODO: we probably want this somehow else.
-        log: Log
+        log*: Log
         tree: BTree[string, seq[byte]]
 
     DatabaseError* = enum
@@ -20,7 +20,7 @@ type
         KeyNotFound             = "minima: key not found"
         PersistenceFailed       = "minima: persistence failed"
 
-proc open*(dir: string, key: string): Result[Database, DatabaseError] =
+proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, DatabaseError] =
     ## Opens an encrypted database at the specified path.
     ## 
     ## **Example:**

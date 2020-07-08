@@ -3,15 +3,16 @@
 # Copyright (c) 2020 Dean Eigenmann
 # Licensed under MIT license ([LICENSE](LICENSE) or http://opensource.org/licenses/MIT)
 
-import sequtils, stew/[byteutils, endians2], nimAES
+import sequtils, stew/[byteutils, endians2], nimcrypto
 
 type 
     Log* = ref object of RootObj
-        file: File
+        file*: File
 
     StandardLog* = ref object of Log
     EncryptedLog* = ref object of Log
-        aes: AESContext
+        key: array[aes256.sizeKey, byte]
+        iv: array[aes256.sizeBlock, byte]
 
 method close*(log: Log) {.base.} =
     log.file.close()
@@ -47,6 +48,7 @@ proc init*(T: type StandardLog, file: File): T =
 method log*(log: StandardLog, key: seq[byte], value: seq[byte]) =
     let write = pack(key, value)
     # @TODO CATCH EXCEPTIONS
+
     discard log.file.writeBytes(write, 0, len(write))
     log.file.flushFile()
 
@@ -64,33 +66,59 @@ method next*(log: StandardLog): (seq[byte], seq[byte]) =
 
     return (key, val)
 
-proc init*(T: type EncryptedLog, file: File, key: string): T =
-    var aes = initAES()
-    discard aes.setEncodeKey(key)
-    discard aes.setDecodeKey(key)
-    result = T(file: file, aes: aes)
+proc init*(T: type EncryptedLog, file: File, key: array[aes256.sizeKey, byte]): T =
+    var aliceIv = "0123456789ABCDEF"
+    var iv: array[aes256.sizeBlock, byte]
+    
+    # @TODO IV NEEDS TO BE REGENERATED EVERY WRITE
+    
+    copyMem(addr iv[0], addr aliceIv[0], len(aliceIv))
+    result = T(file: file, key: key, iv: iv)
 
 method log*(log: EncryptedLog, key: seq[byte], value: seq[byte]) =
-    let data = log.aes.encryptCBC(pack(key, value).toHex).toBytes()
+    let packet = pack(key, value)
 
-    discard log.file.writeBytes(@(uint32(len(data)).toBytes), 0, 4)
-    discard log.file.writeBytes(data, 0, len(data))
+    var encrypt: CTR[aes256]
+    encrypt.init(log.key, log.iv)
+    
+    var encrypted = newSeq[byte](len(packet))
+    encrypt.encrypt(packet, encrypted)
+
+    let write = concat(@(uint32(len(encrypted)).toBytes), encrypted)
+
+    var decrypt: CTR[aes256]
+    decrypt.init(log.key, log.iv)
+
+    var decrypted = newSeq[byte](len(encrypted))
+    decrypt.decrypt(encrypted, decrypted)
+
+    discard log.file.writeBytes(write, 0, len(write))
     log.file.flushFile()
 
 method next*(log: EncryptedLog): (seq[byte], seq[byte]) =
-    let dataLen = readInt(log.file)
+    let encryptedLen = readInt(log.file)
 
-    var data = newSeq[byte](dataLen)
-    discard log.file.readBytes(data, 0, dataLen)
+    var encrypted = newSeq[byte](encryptedLen)
+    discard log.file.readBytes(encrypted, 0, encryptedLen)
 
-    let msg = string.fromBytes(data).hexToSeqByte()
+    var data = newSeq[byte](encryptedLen)
 
-    var keyLen = uint32.fromBytes(@(msg.toOpenArray(0, 3)))
-    var valLen = uint32.fromBytes(@(msg.toOpenArray(4, 8)))
+    var decrypt: CTR[aes256]
+    decrypt.init(log.key, log.iv)
+    decrypt.decrypt(encrypted, data)
 
+    let keyLen = uint32.fromBytes(@(data.toOpenArray(0, 3)))
+    let valLen = uint32.fromBytes(@(data.toOpenArray(4, 7)))
+
+    let keyEnd = 8 + int(keyLen - 1)
+    let key = @(data.toOpenArray(8, keyEnd))
+
+    let valStart = keyEnd + 1
+
+    let value = @(data.toOpenArray(valStart, valStart + int(valLen - 1)))
 
     return (
-        @(msg.toOpenArray(9, 9 + int(keyLen))),
-        @(msg.toOpenArray(9 + int(keyLen), 9 + int(keyLen) + int(valLen)))
+        key,
+        value
     )
 
