@@ -12,7 +12,6 @@ type
     StandardLog* = ref object of Log
     EncryptedLog* = ref object of Log
         key: array[aes256.sizeKey, byte]
-        iv: array[aes256.sizeBlock, byte]
 
 method close*(log: Log) {.base.} =
     log.file.close()
@@ -67,13 +66,7 @@ method next*(log: StandardLog): (seq[byte], seq[byte]) =
     return (key, val)
 
 proc init*(T: type EncryptedLog, file: File, key: array[aes256.sizeKey, byte]): T =
-    var aliceIv = "0123456789ABCDEF"
-    var iv: array[aes256.sizeBlock, byte]
-    
-    # @TODO IV NEEDS TO BE REGENERATED EVERY WRITE
-    
-    copyMem(addr iv[0], addr aliceIv[0], len(aliceIv))
-    result = T(file: file, key: key, iv: iv)
+    result = T(file: file, key: key)
 
 proc randomIV(): array[aes256.sizeBlock, byte] =
     randomize()
@@ -116,14 +109,10 @@ method next*(log: EncryptedLog): (seq[byte], seq[byte]) =
     let valLen = uint32.fromBytes(@(data.toOpenArray(4, 7)))
 
     let keyEnd = 8 + int(keyLen - 1)
-    let key = @(data.toOpenArray(8, keyEnd))
-
     let valStart = keyEnd + 1
 
-    let value = @(data.toOpenArray(valStart, valStart + int(valLen - 1)))
-
     return (
-        key,
-        value
+        @(data.toOpenArray(8, keyEnd)),
+        @(data.toOpenArray(valStart, valStart + int(valLen - 1)))
     )
 
