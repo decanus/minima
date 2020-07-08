@@ -37,7 +37,7 @@ if not result.isOk:
 Once a database has been opened, working with Minima is just as simple:
 
 ```nim
-db = result.value
+let db = result.value
 
 let key = @[byte 1, 2, 3, 4]
 
