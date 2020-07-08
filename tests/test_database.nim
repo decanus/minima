@@ -15,7 +15,8 @@ proc checkValues(db: Database, vals: seq[seq[byte]]): bool =
 
 proc createEncryptedDatabase(): Database =
     var key: array[32, byte]
-    var pass = "Alice Key"
+    var pass = "password"
+    copyMem(addr key[0], addr pass[0], len(pass))
 
     var res = database.open("/tmp", key)
     check:
@@ -134,7 +135,7 @@ suite "Encrypted Database Test Suite":
 suite "Database Test Suite":
     teardown:
         removeFile("/tmp/minima.db")
-        
+
     test "can set and get key":
         testSetAndGet(createDatabase)
 
