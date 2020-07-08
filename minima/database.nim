@@ -11,7 +11,7 @@ type
     ## Database object
     Database* = ref object
         dir: string # @TODO: we probably want this somehow else.
-        log*: Log
+        log: Log
         tree: BTree[string, seq[byte]]
 
     DatabaseError* = enum
