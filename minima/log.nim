@@ -3,9 +3,10 @@
 # Copyright (c) 2020 Dean Eigenmann
 # Licensed under MIT license ([LICENSE](LICENSE) or http://opensource.org/licenses/MIT)
 
-import sequtils, stew/[byteutils, endians2], nimcrypto, random
+import sequtils, stew/endians2, nimcrypto, random
 
 type 
+    ## Log represents the the Write-Ahead Log used for persisting the KV Database.
     Log* = ref object of RootObj
         file*: File
 
@@ -14,15 +15,19 @@ type
         key: array[aes256.sizeKey, byte]
 
 method close*(log: Log) {.base.} =
+    ## Closes the log file.
     log.file.close()
 
 method log*(log: Log, key: seq[byte], value: seq[byte]) {.base.} =
+    ## Writes a key, value pair to the Write-Ahead Log.
     discard
 
 method next*(log: Log): (seq[byte], seq[byte]) {.base.} =
+    ## Next gets the next key, value pair from the log.
     discard
 
 iterator pairs*(log: Log): (seq[byte], seq[byte]) =
+    ## Pairs is an iterator that iterates through all the pairs in the Write-Ahead Log.
     while log.file.getFilePos() <= log.file.getFileSize() - 1:
         var (k, v) = log.next()
         yield (k, v)
@@ -42,6 +47,7 @@ proc pack(key, value: seq[byte]): seq[byte] =
     )
 
 proc init*(T: type StandardLog, file: File): T =
+    ## Returns a new Log.
     result = T(file: file)
 
 method log*(log: StandardLog, key: seq[byte], value: seq[byte]) =
@@ -66,6 +72,7 @@ method next*(log: StandardLog): (seq[byte], seq[byte]) =
     return (key, val)
 
 proc init*(T: type EncryptedLog, file: File, key: array[aes256.sizeKey, byte]): T =
+    ## Returns a new Encrypted Log that is encrypted using the key.
     result = T(file: file, key: key)
 
 proc randomIV(): array[aes256.sizeBlock, byte] =
