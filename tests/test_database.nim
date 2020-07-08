@@ -84,13 +84,10 @@ suite "Database Test Suite":
         check:
             checkValues(db, vals)
 
-        let newVals = @[@[byte 1, 2, 3, 4, 5, 6, 7]]
+        let newVals = @[@[byte 1, 2, 3, 4, 5, 6, 7], @[byte 1, 2, 3, 4, 5, 6, 7, 8]]
         for val in newVals:
             discard db.set(val, val)
         
-        db.log.file.setFilePos(0)
-        echo db.log.file.readAll().toBytes
-
         db.close()
 
         res = database.open("/tmp", key)

@@ -3,7 +3,7 @@
 # Copyright (c) 2020 Dean Eigenmann
 # Licensed under MIT license ([LICENSE](LICENSE) or http://opensource.org/licenses/MIT)
 
-import sequtils, stew/[byteutils, endians2], nimcrypto
+import sequtils, stew/[byteutils, endians2], nimcrypto, random
 
 type 
     Log* = ref object of RootObj
@@ -75,22 +75,24 @@ proc init*(T: type EncryptedLog, file: File, key: array[aes256.sizeKey, byte]): 
     copyMem(addr iv[0], addr aliceIv[0], len(aliceIv))
     result = T(file: file, key: key, iv: iv)
 
+proc randomIV(): array[aes256.sizeBlock, byte] =
+    randomize()
+
+    for i in 0 ..< result.len:
+        result[i] = byte(rand(256))
+
 method log*(log: EncryptedLog, key: seq[byte], value: seq[byte]) =
     let packet = pack(key, value)
 
+    let iv = randomIV()
+
     var encrypt: CTR[aes256]
-    encrypt.init(log.key, log.iv)
+    encrypt.init(log.key, iv)
     
     var encrypted = newSeq[byte](len(packet))
     encrypt.encrypt(packet, encrypted)
 
-    let write = concat(@(uint32(len(encrypted)).toBytes), encrypted)
-
-    var decrypt: CTR[aes256]
-    decrypt.init(log.key, log.iv)
-
-    var decrypted = newSeq[byte](len(encrypted))
-    decrypt.decrypt(encrypted, decrypted)
+    let write = concat(@(uint32(len(encrypted)).toBytes), @iv, encrypted)
 
     discard log.file.writeBytes(write, 0, len(write))
     log.file.flushFile()
@@ -98,13 +100,16 @@ method log*(log: EncryptedLog, key: seq[byte], value: seq[byte]) =
 method next*(log: EncryptedLog): (seq[byte], seq[byte]) =
     let encryptedLen = readInt(log.file)
 
+    var iv: array[aes256.sizeBlock, byte]
+    discard log.file.readBytes(iv, 0, aes256.sizeBlock)
+
     var encrypted = newSeq[byte](encryptedLen)
     discard log.file.readBytes(encrypted, 0, encryptedLen)
 
     var data = newSeq[byte](encryptedLen)
 
     var decrypt: CTR[aes256]
-    decrypt.init(log.key, log.iv)
+    decrypt.init(log.key, iv)
     decrypt.decrypt(encrypted, data)
 
     let keyLen = uint32.fromBytes(@(data.toOpenArray(0, 3)))
