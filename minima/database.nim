@@ -33,7 +33,7 @@ proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, Data
     ## **Example:**
     ##
     ## .. code-block::
-    ##   let result = open("/tmp/minima")
+    ##   let result = open("/tmp/minima", "password".toAESKey)
     ##   if not result.isOk:
     ##     return
     if not os.existsDir(dir):

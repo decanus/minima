@@ -22,11 +22,7 @@ A database can also be encrypted by passing a password:
 ```nim
 import stew/results, minima
 
-var key: array[32, byte]
-var pass = "password"
-copyMem(addr key[0], addr pass[0], len(pass))
-
-let result = open("/tmp/minima", key)
+let result = open("/tmp/minima", "password".toAESKey)
 if not result.isOk:
     echo result.error()
     return
