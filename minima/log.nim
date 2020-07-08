@@ -8,7 +8,7 @@ import sequtils, stew/endians2, nimcrypto, random
 type 
     ## Log represents the the Write-Ahead Log used for persisting the KV Database.
     Log* = ref object of RootObj
-        file*: File
+        file: File
 
     StandardLog* = ref object of Log
     EncryptedLog* = ref object of Log
