@@ -22,7 +22,43 @@ type
 
 proc open*(dir: string, key: string): Result[Database, DatabaseError] =
     ## Opens an encrypted database at the specified path.
-    discard
+    ## 
+    ## **Example:**
+    ##
+    ## .. code-block::
+    ##   let result = open("/tmp/minima")
+    ##   if not result.isOk:
+    ##     return
+    if not os.existsDir(dir):
+        try:
+            os.createDir(dir)
+        except:
+            return err(DirectoryCreationFailed)
+
+    var path = dir & "/minima.db"
+    var mode = fmReadWrite
+    if fileExists(path):
+        mode = fmReadWriteExisting
+
+    var f: File
+    try:
+        f = open(path, mode)
+    except:
+        return err(TreeFileCreationFailed)
+
+    var l = EncryptedLog.init(f, key)
+
+    var db = Database(
+        dir: dir,
+        log: l,
+        tree: initBTree[string, seq[byte]]()
+    )
+
+    if mode == fmReadWriteExisting:
+        for (key, val) in db.log.pairs():
+            db.tree.add(string.fromBytes(key), val)
+
+    ok(db)
 
 # @TODO: Maybe move this func to ../minima.nim
 proc open*(dir: string): Result[Database, DatabaseError] =
@@ -101,6 +137,7 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
     try:
         db.log.log(key, value)
     except:
+        echo repr(getCurrentException())
         return err(PersistenceFailed)
     
     ok()

@@ -64,8 +64,14 @@ method next*(log: StandardLog): (seq[byte], seq[byte]) =
 
     return (key, val)
 
+proc init*(T: type EncryptedLog, file: File, key: string): T =
+    var aes = initAES()
+    discard aes.setEncodeKey(key)
+    discard aes.setDecodeKey(key)
+    result = T(file: file, aes: aes)
+
 method log*(log: EncryptedLog, key: seq[byte], value: seq[byte]) =
-    let data = log.aes.encryptECB(pack(key, value).toHex).toBytes()
+    let data = log.aes.encryptCBC(pack(key, value).toHex).toBytes()
 
     discard log.file.writeBytes(@(uint32(len(data)).toBytes), 0, 4)
     discard log.file.writeBytes(data, 0, len(data))
