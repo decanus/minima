@@ -46,11 +46,9 @@ proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, Data
     except:
         return err(TreeFileCreationFailed)
 
-    var l = EncryptedLog.init(f, key)
-
     var db = Database(
         dir: dir,
-        log: l,
+        log: EncryptedLog.init(f, key),
         tree: initBTree[string, seq[byte]]()
     )
 
@@ -88,11 +86,9 @@ proc open*(dir: string): Result[Database, DatabaseError] =
     except:
         return err(TreeFileCreationFailed)
 
-    var l = StandardLog.init(f)
-
     var db = Database(
         dir: dir,
-        log: l,
+        log: StandardLog.init(f),
         tree: initBTree[string, seq[byte]]()
     )
 
