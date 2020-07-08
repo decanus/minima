@@ -14,11 +14,7 @@ proc checkValues(db: Database, vals: seq[seq[byte]]): bool =
     return true
 
 proc createEncryptedDatabase(): Database =
-    var key: array[32, byte]
-    var pass = "password"
-    copyMem(addr key[0], addr pass[0], len(pass))
-
-    var res = database.open("/tmp", key)
+    var res = database.open("/tmp", "password".toAESKey)
     check:
         res.isOk 
     

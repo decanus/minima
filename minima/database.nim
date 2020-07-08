@@ -20,6 +20,13 @@ type
         KeyNotFound             = "minima: key not found"
         PersistenceFailed       = "minima: persistence failed"
 
+proc toAESKey*(str: string): array[aes256.sizeKey, byte] = 
+    var pass = str
+    var key: array[32, byte]
+    copyMem(addr key[0], addr pass[0], len(pass))
+
+    return key
+
 proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, DatabaseError] =
     ## Opens an encrypted database at the specified path.
     ## 
