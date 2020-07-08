@@ -20,7 +20,12 @@ type
         KeyNotFound             = "minima: key not found"
         PersistenceFailed       = "minima: persistence failed"
 
-proc toAESKey*(str: string): array[aes256.sizeKey, byte] = 
+proc toAESKey*(str: string): array[aes256.sizeKey, byte] =
+    ## Concerts a string to an AES Key for opening an encrypted database.
+    ## 
+    ## **Example::**
+    ## .. code-block::
+    ##   let password = "foo".toAESKey
     var pass = str
     var key: array[32, byte]
     copyMem(addr key[0], addr pass[0], len(pass))
