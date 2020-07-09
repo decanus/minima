@@ -46,7 +46,7 @@ proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, Data
     except:
         return err(DirectoryCreationFailed)
 
-    var path = dir & "/minima.db"
+    var path = dir / "minima.db"
     var mode = fmReadWrite
     if fileExists(path):
         mode = fmReadWriteExisting
