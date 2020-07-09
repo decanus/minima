@@ -8,10 +8,12 @@
 import stew/[results, byteutils], os, tree, log, nimcrypto
 
 type 
+    Key* = seq[byte]
+    Value* = seq[byte]
     ## Database object
     Database* = ref object
         log: Log
-        tree: BTree[string, seq[byte]]
+        tree: BTree[string, Value]
 
     DatabaseError* = enum
         DirectoryCreationFailed = "minima: failed to create db directory"
@@ -42,7 +44,7 @@ proc init*(T: type Database, log: Log): T =
     ##   let db = Database.init(StandardLog.init(file))
     result = T(
         log: log,
-        tree: initBTree[string, seq[byte]]()
+        tree: initBTree[string, Value]()
     )
 
     for (key, val) in result.log.pairs():
@@ -102,7 +104,7 @@ proc close*(db: Database) =
     ## Closes the database.
     db.log.close()
 
-proc get*(db: Database, key: seq[byte]): Result[seq[byte], DatabaseError] =
+proc get*(db: Database, key: Key): Result[Value, DatabaseError] =
     ## Retrieve a value if it exists.
     ## 
     ## **Example:**
@@ -118,7 +120,7 @@ proc get*(db: Database, key: seq[byte]): Result[seq[byte], DatabaseError] =
 
     ok(val)
 
-proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, DatabaseError] =
+proc set*(db: Database, key: Key, value: Value): Result[void, DatabaseError] =
     ## Set a value for a key.
     ## 
     ## **Example:**
@@ -137,7 +139,7 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
     
     ok()
 
-proc has*(db: Database, key: seq[byte]): bool =
+proc has*(db: Database, key: Key): bool =
     ## Check whether a value has been set for a key.
     ## 
     ## **Example:**
