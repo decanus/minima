@@ -196,9 +196,8 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 <p>Concerts a string to an AES Key for opening an encrypted database.</p>
-<p><strong>Example::</strong> .. code-block:<pre>let password = &quot;foo&quot;.toAESKey</pre>
-</p>
-
+<p><strong>Example::</strong></p>
+<pre class="listing"><span class="Keyword">let</span> <span class="Identifier">password</span> <span class="Operator">=</span> <span class="StringLit">&quot;foo&quot;</span><span class="Operator">.</span><span class="Identifier">toAESKey</span></pre>
 &nbsp;&nbsp;<a
 href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L22"
 class="link-seesrc" target="_blank">Source</a>
@@ -210,13 +209,12 @@ class="link-seesrc" target="_blank">Source</a>
 <dd>
 
 <p>Init creates a Database.</p>
-<p><strong>Example:</strong> .. code-block:<pre>let db = Database.init(StandardLog.init(file))</pre>
-</p>
-
+<p><strong>Example:</strong></p>
+<pre class="listing"><span class="Keyword">let</span> <span class="Identifier">db</span> <span class="Operator">=</span> <span class="Identifier">Database</span><span class="Operator">.</span><span class="Identifier">init</span><span class="Punctuation">(</span><span class="Identifier">StandardLog</span><span class="Operator">.</span><span class="Identifier">init</span><span class="Punctuation">(</span><span class="Identifier">file</span><span class="Punctuation">)</span><span class="Punctuation">)</span></pre>
 &nbsp;&nbsp;<a
-href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L35"
+href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L36"
 class="link-seesrc" target="_blank">Source</a>
-<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L35" class="link-seesrc" target="_blank" >Edit</a>
+<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L36" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <a id="open,string,array[,byte]"></a>
@@ -231,9 +229,9 @@ class="link-seesrc" target="_blank">Source</a>
 <span class="Keyword">if</span> <span class="Keyword">not</span> <span class="Identifier">result</span><span class="Operator">.</span><span class="Identifier">isOk</span><span class="Punctuation">:</span>
   <span class="Keyword">return</span></pre>
 &nbsp;&nbsp;<a
-href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L49"
+href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L51"
 class="link-seesrc" target="_blank">Source</a>
-<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L49" class="link-seesrc" target="_blank" >Edit</a>
+<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L51" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <a id="open,string"></a>
@@ -247,9 +245,9 @@ class="link-seesrc" target="_blank">Source</a>
 <span class="Keyword">if</span> <span class="Keyword">not</span> <span class="Identifier">result</span><span class="Operator">.</span><span class="Identifier">isOk</span><span class="Punctuation">:</span>
   <span class="Keyword">return</span></pre>
 &nbsp;&nbsp;<a
-href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L74"
+href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L76"
 class="link-seesrc" target="_blank">Source</a>
-<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L74" class="link-seesrc" target="_blank" >Edit</a>
+<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L76" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <a id="close,Database"></a>
@@ -258,9 +256,9 @@ class="link-seesrc" target="_blank">Source</a>
 
 Closes the database.
 &nbsp;&nbsp;<a
-href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L99"
+href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L101"
 class="link-seesrc" target="_blank">Source</a>
-<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L99" class="link-seesrc" target="_blank" >Edit</a>
+<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L101" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <a id="get,Database,seq[byte]"></a>
@@ -275,9 +273,9 @@ class="link-seesrc" target="_blank">Source</a>
 <span class="Identifier">db</span><span class="Operator">.</span><span class="Identifier">set</span><span class="Punctuation">(</span><span class="Identifier">key</span><span class="Punctuation">,</span> <span class="Identifier">value</span><span class="Punctuation">)</span>
 <span class="Identifier">assert</span><span class="Punctuation">(</span><span class="Identifier">db</span><span class="Operator">.</span><span class="Identifier">get</span><span class="Punctuation">(</span><span class="Identifier">key</span><span class="Punctuation">)</span> <span class="Operator">==</span> <span class="Identifier">value</span><span class="Punctuation">)</span></pre>
 &nbsp;&nbsp;<a
-href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L103"
+href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L105"
 class="link-seesrc" target="_blank">Source</a>
-<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L103" class="link-seesrc" target="_blank" >Edit</a>
+<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L105" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <a id="set,Database,seq[byte],seq[byte]"></a>
@@ -292,9 +290,9 @@ class="link-seesrc" target="_blank">Source</a>
 <span class="Identifier">db</span><span class="Operator">.</span><span class="Identifier">set</span><span class="Punctuation">(</span><span class="Identifier">key</span><span class="Punctuation">,</span> <span class="Identifier">value</span><span class="Punctuation">)</span>
 <span class="Identifier">assert</span><span class="Punctuation">(</span><span class="Identifier">db</span><span class="Operator">.</span><span class="Identifier">get</span><span class="Punctuation">(</span><span class="Identifier">key</span><span class="Punctuation">)</span> <span class="Operator">==</span> <span class="Identifier">value</span><span class="Punctuation">)</span></pre>
 &nbsp;&nbsp;<a
-href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L119"
+href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L121"
 class="link-seesrc" target="_blank">Source</a>
-<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L119" class="link-seesrc" target="_blank" >Edit</a>
+<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L121" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 <a id="has,Database,seq[byte]"></a>
@@ -307,9 +305,9 @@ class="link-seesrc" target="_blank">Source</a>
 <span class="Identifier">db</span><span class="Operator">.</span><span class="Identifier">set</span><span class="Punctuation">(</span><span class="Identifier">key</span><span class="Punctuation">,</span> <span class="Operator">@</span><span class="Punctuation">[</span><span class="Identifier">byte</span> <span class="DecNumber">4</span><span class="Punctuation">,</span> <span class="DecNumber">3</span><span class="Punctuation">,</span> <span class="DecNumber">2</span><span class="Punctuation">,</span> <span class="DecNumber">1</span><span class="Punctuation">]</span><span class="Punctuation">]</span><span class="Punctuation">)</span>
 <span class="Identifier">assert</span><span class="Punctuation">(</span><span class="Identifier">db</span><span class="Operator">.</span><span class="Identifier">has</span><span class="Punctuation">(</span><span class="Identifier">key</span><span class="Punctuation">)</span><span class="Punctuation">)</span></pre>
 &nbsp;&nbsp;<a
-href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L138"
+href="https://github.com/decanus/minima/tree/version-1-2/minima/database.nim#L140"
 class="link-seesrc" target="_blank">Source</a>
-<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L138" class="link-seesrc" target="_blank" >Edit</a>
+<a href="https://github.com/decanus/minima/edit/devel/minima/database.nim#L140" class="link-seesrc" target="_blank" >Edit</a>
 
 </dd>
 
@@ -322,7 +320,7 @@ class="link-seesrc" target="_blank">Source</a>
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small style="color: var(--hint);">Made with Nim. Generated: 2020-07-09 11:52:45 UTC</small>
+        <small style="color: var(--hint);">Made with Nim. Generated: 2020-07-09 12:00:31 UTC</small>
       </div>
     </div>
   </div>
