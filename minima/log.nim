@@ -39,7 +39,7 @@ proc readInt(file: File): int =
 
     return int(uint32.fromBytes(arr))
 
-proc pack(key, value: seq[byte]): seq[byte] =
+func pack(key, value: seq[byte]): seq[byte] =
     concat(
         @(uint32(len(key)).toBytes),
         @(uint32(len(value)).toBytes),
