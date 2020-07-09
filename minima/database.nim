@@ -22,7 +22,7 @@ type
 proc toAESKey*(str: string): array[aes256.sizeKey, byte] =
     ## Concerts a string to an AES Key for opening an encrypted database.
     ## 
-    ## **Example::**
+    ## **Example:**
     ##
     ## .. code-block::
     ##   let password = "foo".toAESKey
