@@ -14,7 +14,17 @@
 ##     return
 ## 
 ##   let db = result.value
+##
+## Opening an encrypted database
+## -----------------------------
 ## 
+## .. code-block::
+##   let result = open("/tmp/minima", "password".toAESKey)
+##   if not result.isOk:
+##     return
+## 
+##   let db = result.value
+##
 ## Inserting data
 ## --------------
 ## 
@@ -42,3 +52,6 @@
 
 import minima/database
 export database
+
+import stew/result
+export result
