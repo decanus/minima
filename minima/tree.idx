@@ -1,9 +1,0 @@
-BTree	minima/tree.html#BTree	tree: BTree	
-initBTree	minima/tree.html#initBTree	tree: initBTree[Key, Val](): BTree[Key, Val]	
-getOrDefault	minima/tree.html#getOrDefault,BTree[Key,Val],Key	tree: getOrDefault[Key, Val](b: BTree[Key, Val]; key: Key): Val	
-contains	minima/tree.html#contains,BTree[Key,Val],Key	tree: contains[Key, Val](b: BTree[Key, Val]; key: Key): bool	
-add	minima/tree.html#add,BTree[Key,Val],Key,Val	tree: add[Key, Val](b: var BTree[Key, Val]; key: Key; val: Val)	
-hasNext	minima/tree.html#hasNext,BTree[Key,Val],int	tree: hasNext[Key, Val](b: BTree[Key, Val]; index: int): bool	
-next	minima/tree.html#next,BTree[Key,Val],int	tree: next[Key, Val](b: BTree[Key, Val]; index: int): (Key, Val, int)	
-pairs	minima/tree.html#pairs.i,BTree[Key,Val]	tree: pairs[Key, Val](b: BTree[Key, Val]): (Key, Val)	
-len	minima/tree.html#len,BTree[Key,Val]	tree: len[Key, Val](b: BTree[Key, Val]): int	
