@@ -5,8 +5,7 @@ import ../minima/database, stew/[results, byteutils], os, sequtils
 type
     InitProc = proc (): Database
 
-let
-    DatabasePath = "/tmp"
+const DatabasePath = "/tmp"
 
 proc checkValues(db: Database, vals: seq[seq[byte]]): bool =
     for val in vals:
