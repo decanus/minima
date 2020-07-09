@@ -31,16 +31,15 @@ proc toAESKey*(str: string): array[aes256.sizeKey, byte] =
 
     return key
 
-proc init*(T: type Database, log: Log, isReopened = false): T =
+proc init*(T: type Database, log: Log): T =
     ## Init creates a new Database.
     result = T(
         log: log,
         tree: initBTree[string, seq[byte]]()
     )
 
-    if isReopened:
-        for (key, val) in result.log.pairs():
-            result.tree.add(string.fromBytes(key), val)
+    for (key, val) in result.log.pairs():
+        result.tree.add(string.fromBytes(key), val)
 
 proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, DatabaseError] =
     ## Opens an encrypted database at the specified path.
@@ -64,7 +63,7 @@ proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, Data
     var f = try: open(path, mode)
         except CatchableError: return err(TreeFileCreationFailed)
 
-    ok(Database.init(EncryptedLog.init(f, key), mode == fmReadWriteExisting))
+    ok(Database.init(EncryptedLog.init(f, key)))
 
 # @TODO: Maybe move this func to ../minima.nim
 proc open*(dir: string): Result[Database, DatabaseError] =
@@ -90,7 +89,7 @@ proc open*(dir: string): Result[Database, DatabaseError] =
     var f = try: open(path, mode)
         except CatchableError: return err(TreeFileCreationFailed)
 
-    ok(Database.init(StandardLog.init(f), mode == fmReadWriteExisting))
+    ok(Database.init(StandardLog.init(f)))
 
 proc close*(db: Database) =
     ## Closes the database.
