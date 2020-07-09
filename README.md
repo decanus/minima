@@ -9,7 +9,7 @@ MinimaDB: A persistent & embeddable KV store written in Nim.
 Opening a Minima database is super simple, you simply pass a directory to the `open` function indicating where you want your database saved:
 
 ```nim
-import stew/results, minima
+import minima
 
 let result = open("/tmp/minima")
 if not result.isOk:
@@ -20,7 +20,7 @@ if not result.isOk:
 A database can also be encrypted by passing a password:
 
 ```nim
-import stew/results, minima
+import minima
 
 let result = open("/tmp/minima", "password".toAESKey)
 if not result.isOk:

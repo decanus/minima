@@ -28,7 +28,8 @@ method next*(log: Log): (seq[byte], seq[byte]) {.base.} =
 
 iterator pairs*(log: Log): (seq[byte], seq[byte]) =
     ## Pairs is an iterator that iterates through all the pairs in the Write-Ahead Log.
-    while log.file.getFilePos() <= log.file.getFileSize() - 1:
+    let fileSize = log.file.getFileSize()
+    while log.file.getFilePos() < fileSize:
         var (k, v) = log.next()
         yield (k, v)
 
@@ -82,9 +83,9 @@ proc randomIV(): array[aes256.sizeBlock, byte] =
         result[i] = byte(rand(256))
 
 method log*(log: EncryptedLog, key: seq[byte], value: seq[byte]) =
-    let packet = pack(key, value)
-
-    let iv = randomIV()
+    let 
+        packet = pack(key, value) 
+        iv = randomIV()
 
     var encrypt: CTR[aes256]
     encrypt.init(log.key, iv)
@@ -112,8 +113,8 @@ method next*(log: EncryptedLog): (seq[byte], seq[byte]) =
     decrypt.init(log.key, iv)
     decrypt.decrypt(encrypted, data)
 
-    let keyLen = uint32.fromBytes(@(data.toOpenArray(0, 3)))
-    let valLen = uint32.fromBytes(@(data.toOpenArray(4, 7)))
+    let keyLen = uint32.fromBytes(data.toOpenArray(0, 3))
+    let valLen = uint32.fromBytes(data.toOpenArray(4, 7))
 
     let keyEnd = 8 + int(keyLen - 1)
     let valStart = keyEnd + 1
