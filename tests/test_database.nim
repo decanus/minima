@@ -32,11 +32,11 @@ proc testSetAndGet(fn: InitProc) =
     let value = @[byte 4, 3, 2, 1]
         
     let db = fn()
-    var setResult = db.set(key, value)
+    let setResult = db.set(key, value)
     check:
         setResult.isOk
 
-    var getResult = db.get(key)
+    let getResult = db.get(key)
 
     check:
         getResult.isOk
