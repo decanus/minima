@@ -23,6 +23,7 @@ proc toAESKey*(str: string): array[aes256.sizeKey, byte] =
     ## Concerts a string to an AES Key for opening an encrypted database.
     ## 
     ## **Example::**
+    ##
     ## .. code-block::
     ##   let password = "foo".toAESKey
     doAssert len(str) <= 32
@@ -36,6 +37,7 @@ proc init*(T: type Database, log: Log): T =
     ## Init creates a Database.
     ## 
     ## **Example:**
+    ##
     ## .. code-block::
     ##   let db = Database.init(StandardLog.init(file))
     result = T(
