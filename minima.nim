@@ -53,5 +53,5 @@
 import minima/database
 export database
 
-import stew/result
-export result
+import stew/results
+export results
