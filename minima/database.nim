@@ -10,7 +10,6 @@ import stew/[results, byteutils], os, tree, log, nimcrypto
 type 
     ## Database object
     Database* = ref object
-        dir: string # @TODO: we probably want this somehow else.
         log: Log
         tree: BTree[string, seq[byte]]
 
@@ -32,6 +31,17 @@ proc toAESKey*(str: string): array[aes256.sizeKey, byte] =
 
     return key
 
+proc init*(T: type Database, log: Log, isReopened = false): T =
+    ## Init creates a new Database.
+    result = T(
+        log: log,
+        tree: initBTree[string, seq[byte]]()
+    )
+
+    if isReopened:
+        for (key, val) in result.log.pairs():
+            result.tree.add(string.fromBytes(key), val)
+
 proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, DatabaseError] =
     ## Opens an encrypted database at the specified path.
     ## 
@@ -51,23 +61,10 @@ proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, Data
     if fileExists(path):
         mode = fmReadWriteExisting
 
-    var f: File
-    try:
-        f = open(path, mode)
-    except:
-        return err(TreeFileCreationFailed)
+    var f = try: open(path, mode)
+        except CatchableError: return err(TreeFileCreationFailed)
 
-    var db = Database(
-        dir: dir,
-        log: EncryptedLog.init(f, key),
-        tree: initBTree[string, seq[byte]]()
-    )
-
-    if mode == fmReadWriteExisting:
-        for (key, val) in db.log.pairs():
-            db.tree.add(string.fromBytes(key), val)
-
-    ok(db)
+    ok(Database.init(EncryptedLog.init(f, key), mode == fmReadWriteExisting))
 
 # @TODO: Maybe move this func to ../minima.nim
 proc open*(dir: string): Result[Database, DatabaseError] =
@@ -90,23 +87,10 @@ proc open*(dir: string): Result[Database, DatabaseError] =
     if fileExists(path):
         mode = fmReadWriteExisting
 
-    var f: File
-    try:
-        f = open(path, mode)
-    except:
-        return err(TreeFileCreationFailed)
+    var f = try: open(path, mode)
+        except CatchableError: return err(TreeFileCreationFailed)
 
-    var db = Database(
-        dir: dir,
-        log: StandardLog.init(f),
-        tree: initBTree[string, seq[byte]]()
-    )
-
-    if mode == fmReadWriteExisting:
-        for (key, val) in db.log.pairs():
-            db.tree.add(string.fromBytes(key), val)
-
-    ok(db)
+    ok(Database.init(StandardLog.init(f), mode == fmReadWriteExisting))
 
 proc close*(db: Database) =
     ## Closes the database.
@@ -142,8 +126,7 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
 
     try:
         db.log.log(key, value)
-    except:
-        echo repr(getCurrentException())
+    except CatchableError:
         return err(PersistenceFailed)
     
     ok()
