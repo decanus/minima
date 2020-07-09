@@ -41,11 +41,10 @@ proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, Data
     ##   let result = open("/tmp/minima", "password".toAESKey)
     ##   if not result.isOk:
     ##     return
-    if not os.existsDir(dir):
-        try:
-            os.createDir(dir)
-        except:
-            return err(DirectoryCreationFailed)
+    try:
+        os.createDir(dir)
+    except:
+        return err(DirectoryCreationFailed)
 
     var path = dir & "/minima.db"
     var mode = fmReadWrite
@@ -81,13 +80,12 @@ proc open*(dir: string): Result[Database, DatabaseError] =
     ##   let result = open("/tmp/minima")
     ##   if not result.isOk:
     ##     return
-    if not os.existsDir(dir):
-        try:
-            os.createDir(dir)
-        except:
-            return err(DirectoryCreationFailed)
+    try:
+        os.createDir(dir)
+    except:
+        return err(DirectoryCreationFailed)
 
-    var path = dir & "/minima.db"
+    var path = dir / "minima.db"
     var mode = fmReadWrite
     if fileExists(path):
         mode = fmReadWriteExisting

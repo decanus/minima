@@ -5,6 +5,9 @@ import ../minima/database, stew/[results, byteutils], os, sequtils
 type
     InitProc = proc (): Database
 
+let
+    DatabasePath = "/tmp"
+
 proc checkValues(db: Database, vals: seq[seq[byte]]): bool =
     for val in vals:
         var res = db.get(val)
@@ -14,14 +17,14 @@ proc checkValues(db: Database, vals: seq[seq[byte]]): bool =
     return true
 
 proc createEncryptedDatabase(): Database =
-    var res = database.open("/tmp", "password".toAESKey)
+    var res = database.open(DatabasePath, "password".toAESKey)
     check:
         res.isOk 
     
     return res.value
 
 proc createDatabase(): Database =
-    var res = database.open("/tmp")
+    var res = database.open(DatabasePath)
     check:
         res.isOk 
     
@@ -111,7 +114,7 @@ proc testCanOverWriteValues(fn: InitProc) =
 
 suite "Encrypted Database Test Suite":
     teardown:
-        removeFile("/tmp/minima.db")
+        removeFile(DatabasePath & "/minima.db")
 
     test "can set and get key":
         testSetAndGet(createEncryptedDatabase)
