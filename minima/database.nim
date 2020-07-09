@@ -25,6 +25,7 @@ proc toAESKey*(str: string): array[aes256.sizeKey, byte] =
     ## **Example::**
     ## .. code-block::
     ##   let password = "foo".toAESKey
+    doAssert len(str) <= 32
     var pass = str
     var key: array[32, byte]
     copyMem(addr key[0], addr pass[0], len(pass))
