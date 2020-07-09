@@ -4,6 +4,9 @@ TreeFileCreationFailed	minima/database.html#TreeFileCreationFailed	DatabaseError
 KeyNotFound	minima/database.html#KeyNotFound	DatabaseError.KeyNotFound	
 PersistenceFailed	minima/database.html#PersistenceFailed	DatabaseError.PersistenceFailed	
 DatabaseError	minima/database.html#DatabaseError	database: DatabaseError	
+toAESKey	minima/database.html#toAESKey,string	database: toAESKey(str: string): array[aes256.sizeKey, byte]	
+init	minima/database.html#init,,Log	database: init(T: type Database; log: Log): T:type	
+open	minima/database.html#open,string,array[,byte]	database: open(dir: string; key: array[aes256.sizeKey, byte]): Result[Database, DatabaseError]	
 open	minima/database.html#open,string	database: open(dir: string): Result[Database, DatabaseError]	
 close	minima/database.html#close,Database	database: close(db: Database)	
 get	minima/database.html#get,Database,seq[byte]	database: get(db: Database; key: seq[byte]): Result[seq[byte], DatabaseError]	
