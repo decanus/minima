@@ -32,7 +32,11 @@ proc toAESKey*(str: string): array[aes256.sizeKey, byte] =
     return key
 
 proc init*(T: type Database, log: Log): T =
-    ## Init creates a new Database.
+    ## Init creates a Database.
+    ## 
+    ## **Example:**
+    ## .. code-block::
+    ##   let db = Database.init(StandardLog.init(file))
     result = T(
         log: log,
         tree: initBTree[string, seq[byte]]()
