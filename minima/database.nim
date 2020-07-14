@@ -35,6 +35,77 @@ proc toAESKey*(str: string): array[aes256.sizeKey, byte] =
 
     return key
 
+proc init*(T: type Database, log: Log): T =
+    ## Init creates a Database.
+    ## 
+    ## **Example:**
+    ##
+    ## .. code-block::
+    ##   let db = Database.init(StandardLog.init(file))
+    result = T(
+        log: log,
+        tree: initBTree[string, seq[byte]]()
+    )
+
+    for (t, key, val) in result.log.pairs():
+        if t == LogType.Value:
+            result.tree.add(string.fromBytes(key), val)
+        elif t == LogType.Tag:
+            #result.tag(key, val)
+            # can't use tag function because it logs
+            # @TODO
+            discard
+
+proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, DatabaseError] =
+    ## Opens an encrypted database at the specified path.
+    ## 
+    ## **Example:**
+    ##
+    ## .. code-block::
+    ##   let result = open("/tmp/minima", "password".toAESKey)
+    ##   if not result.isOk:
+    ##     return
+    try:
+        os.createDir(dir)
+    except:
+        return err(DirectoryCreationFailed)
+
+    var path = dir / "minima.db"
+    var mode = fmReadWrite
+    if fileExists(path):
+        mode = fmReadWriteExisting
+
+    var f = try: open(path, mode)
+        except CatchableError: return err(TreeFileCreationFailed)
+
+    ok(Database.init(EncryptedLog.init(f, key)))
+
+# @TODO: Maybe move this func to ../minima.nim
+proc open*(dir: string): Result[Database, DatabaseError] =
+    ## Opens a database at the specified path.
+    ## This will create a new directory if it does not yet exist.
+    ## 
+    ## **Example:**
+    ##
+    ## .. code-block::
+    ##   let result = open("/tmp/minima")
+    ##   if not result.isOk:
+    ##     return
+    try:
+        os.createDir(dir)
+    except:
+        return err(DirectoryCreationFailed)
+
+    var path = dir / "minima.db"
+    var mode = fmReadWrite
+    if fileExists(path):
+        mode = fmReadWriteExisting
+
+    var f = try: open(path, mode)
+        except CatchableError: return err(TreeFileCreationFailed)
+
+    ok(Database.init(StandardLog.init(f)))
+
 proc close*(db: Database) =
     ## Closes the database.
     db.log.close()
@@ -115,73 +186,3 @@ iterator intersection*(db: Database, tags: seq[seq[byte]]): (seq[byte], seq[byte
 iterator union*(db: Database, tags: seq[seq[byte]]): (seq[byte], seq[byte]) =
     ## Returns all K, V pairs that are the union of the passed tags.
     discard
-
-proc init*(T: type Database, log: Log): T =
-    ## Init creates a Database.
-    ## 
-    ## **Example:**
-    ##
-    ## .. code-block::
-    ##   let db = Database.init(StandardLog.init(file))
-    result = T(
-        log: log,
-        tree: initBTree[string, seq[byte]]()
-    )
-
-    for (t, key, val) in result.log.pairs():
-        if t == LogType.Value:
-            result.tree.add(string.fromBytes(key), val)
-        elif t == LogType.Tag:
-            result.tag(key, val)
-            # @TODO
-            discard
-
-proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, DatabaseError] =
-    ## Opens an encrypted database at the specified path.
-    ## 
-    ## **Example:**
-    ##
-    ## .. code-block::
-    ##   let result = open("/tmp/minima", "password".toAESKey)
-    ##   if not result.isOk:
-    ##     return
-    try:
-        os.createDir(dir)
-    except:
-        return err(DirectoryCreationFailed)
-
-    var path = dir / "minima.db"
-    var mode = fmReadWrite
-    if fileExists(path):
-        mode = fmReadWriteExisting
-
-    var f = try: open(path, mode)
-        except CatchableError: return err(TreeFileCreationFailed)
-
-    ok(Database.init(EncryptedLog.init(f, key)))
-
-# @TODO: Maybe move this func to ../minima.nim
-proc open*(dir: string): Result[Database, DatabaseError] =
-    ## Opens a database at the specified path.
-    ## This will create a new directory if it does not yet exist.
-    ## 
-    ## **Example:**
-    ##
-    ## .. code-block::
-    ##   let result = open("/tmp/minima")
-    ##   if not result.isOk:
-    ##     return
-    try:
-        os.createDir(dir)
-    except:
-        return err(DirectoryCreationFailed)
-
-    var path = dir / "minima.db"
-    var mode = fmReadWrite
-    if fileExists(path):
-        mode = fmReadWriteExisting
-
-    var f = try: open(path, mode)
-        except CatchableError: return err(TreeFileCreationFailed)
-
-    ok(Database.init(StandardLog.init(f)))
