@@ -64,17 +64,18 @@ method log*(log: StandardLog, logType: LogType, key: seq[byte], value: seq[byte]
     discard log.file.writeBytes(write, 0, len(write))
     log.file.flushFile()
 
-method next*(log: StandardLog): (LogType, seq[byte], seq[byte]) =
-    var arr: array[1, byte]
-    discard log.file.readBytes(arr, 0, 1)
-
-    var t = case uint8.fromBytes(arr):
+proc toLogType(arr: openArray[byte] | array[1, byte]): LogType =
+    result =  case uint8.fromBytes(arr):
         of 0:
             LogType.Value
         of 1:
             LogType.Topic
         else:
             LogType.Unknown
+
+method next*(log: StandardLog): (LogType, seq[byte], seq[byte]) =
+    var arr: array[1, byte]
+    discard log.file.readBytes(arr, 0, 1)
 
     let keyLen = readInt(log.file)
     let valLen = readInt(log.file)
@@ -87,7 +88,7 @@ method next*(log: StandardLog): (LogType, seq[byte], seq[byte]) =
     var val = newSeq[byte](valLen)
     discard log.file.readBytes(val, 0, valLen)
 
-    return (t, key, val)
+    return (arr.toLogType(), key, val)
 
 proc init*(T: type EncryptedLog, file: File, key: array[aes256.sizeKey, byte]): T =
     ## Returns a new Encrypted Log that is encrypted using the key.
@@ -130,14 +131,6 @@ method next*(log: EncryptedLog): (LogType, seq[byte], seq[byte]) =
     decrypt.init(log.key, iv)
     decrypt.decrypt(encrypted, data)
 
-    var logType = case uint8.fromBytes(data.toOpenArray(0, 1)):
-        of 0:
-            LogType.Value
-        of 1:
-            LogType.Topic
-        else:
-            LogType.Unknown 
-
     let keyLen = uint32.fromBytes(data.toOpenArray(1, 4))
     let valLen = uint32.fromBytes(data.toOpenArray(5, 8))
 
@@ -145,7 +138,7 @@ method next*(log: EncryptedLog): (LogType, seq[byte], seq[byte]) =
     let valStart = keyEnd + 1
 
     return (
-        logType,
+        data.toOpenArray(0, 1).toLogType(),
         @(data.toOpenArray(9, keyEnd)),
         @(data.toOpenArray(valStart, valStart + int(valLen - 1)))
     )
