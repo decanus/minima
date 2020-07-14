@@ -13,7 +13,7 @@ type
         log: Log
         tree: BTree[string, seq[byte]]
 
-        tags: Table[string, HashSet[seq[byte]]]
+        tags: Table[string, HashSet[string]]
 
     DatabaseError* = enum
         DirectoryCreationFailed = "minima: failed to create db directory"
@@ -35,6 +35,87 @@ proc toAESKey*(str: string): array[aes256.sizeKey, byte] =
 
     return key
 
+proc close*(db: Database) =
+    ## Closes the database.
+    db.log.close()
+
+proc get*(db: Database, key: seq[byte]): Result[seq[byte], DatabaseError] =
+    ## Retrieve a value if it exists.
+    ## 
+    ## **Example:**
+    ## 
+    ## .. code-block::
+    ##   let key = @[byte 1, 2, 3, 4]
+    ##   let value = @[byte 4, 3, 2, 1]
+    ##   db.set(key, value)
+    ##   assert(db.get(key) == value)
+    let val = db.tree.getOrDefault(string.fromBytes(key))
+    if val.len == 0:
+        return err(KeyNotFound)
+
+    ok(val)
+
+proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, DatabaseError] =
+    ## Set a value for a key.
+    ## 
+    ## **Example:**
+    ## 
+    ## .. code-block::
+    ##   let key = @[byte 1, 2, 3, 4]
+    ##   let value = @[byte 4, 3, 2, 1]
+    ##   db.set(key, value)
+    ##   assert(db.get(key) == value)
+    db.tree.add(string.fromBytes(key), value)
+
+    try:
+        db.log.log(LogType.Value, key, value)
+    except CatchableError:
+        return err(PersistenceFailed)
+    
+    ok()
+
+proc has*(db: Database, key: seq[byte]): bool =
+    ## Check whether a value has been set for a key.
+    ## 
+    ## **Example:**
+    ## 
+    ## .. code-block::
+    ##   let key = @[byte 1, 2, 3, 4]
+    ##   db.set(key, @[byte 4, 3, 2, 1]])
+    ##   assert(db.has(key))
+    db.tree.contains(string.fromBytes(key))
+
+proc tag*(db: Database, tag: seq[byte], key: seq[byte]) =
+    ## Adds a tag to a specific key.
+    ##
+    ## Example:
+    ##
+    ## .. code-block::
+    ##   let key = @[byte 1, 2, 3, 4]
+    ##   db.set(key, @[byte 1, 2, 3, 4, 5])
+    ##   db.tag(key, @[byte 1, 2, 3])
+    let t = string.fromBytes(tag)
+    discard db.tags.hasKeyOrPut(t, initHashSet[string]())
+
+    db.log.log(LogType.Tag, tag, key)
+    db.tags[t].incl(string.fromBytes(key))
+
+proc tags*(db: Database): seq[seq[byte]] =
+    ## Returns all the tags currently stored in the database.
+    discard
+
+iterator filter*(db: Database, tag: seq[byte]): (seq[byte], seq[byte]) =
+    ## Returns all K, V pairs that have been tagged.
+    discard
+
+iterator intersection*(db: Database, tags: seq[seq[byte]]): (seq[byte], seq[byte]) =
+    ## Returns all K, V pairs that are in the intersection of the passed tags.
+    discard
+
+iterator union*(db: Database, tags: seq[seq[byte]]): (seq[byte], seq[byte]) =
+    ## Returns all K, V pairs that are the union of the passed tags.
+    discard
+
 proc init*(T: type Database, log: Log): T =
     ## Init creates a Database.
     ## 
@@ -50,7 +131,8 @@ proc init*(T: type Database, log: Log): T =
     for (t, key, val) in result.log.pairs():
         if t == LogType.Value:
             result.tree.add(string.fromBytes(key), val)
-        elif t == LogType.Topic:
+        elif t == LogType.Tag:
+            result.tag(key, val)
             # @TODO
             discard
 
@@ -103,85 +185,3 @@ proc open*(dir: string): Result[Database, DatabaseError] =
         except CatchableError: return err(TreeFileCreationFailed)
 
     ok(Database.init(StandardLog.init(f)))
-
-proc close*(db: Database) =
-    ## Closes the database.
-    db.log.close()
-
-proc get*(db: Database, key: seq[byte]): Result[seq[byte], DatabaseError] =
-    ## Retrieve a value if it exists.
-    ## 
-    ## **Example:**
-    ## 
-    ## .. code-block::
-    ##   let key = @[byte 1, 2, 3, 4]
-    ##   let value = @[byte 4, 3, 2, 1]
-    ##   db.set(key, value)
-    ##   assert(db.get(key) == value)
-    let val = db.tree.getOrDefault(string.fromBytes(key))
-    if val.len == 0:
-        return err(KeyNotFound)
-
-    ok(val)
-
-proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, DatabaseError] =
-    ## Set a value for a key.
-    ## 
-    ## **Example:**
-    ## 
-    ## .. code-block::
-    ##   let key = @[byte 1, 2, 3, 4]
-    ##   let value = @[byte 4, 3, 2, 1]
-    ##   db.set(key, value)
-    ##   assert(db.get(key) == value)
-    db.tree.add(string.fromBytes(key), value)
-
-    try:
-        db.log.log(LogType.Value, key, value)
-    except CatchableError:
-        return err(PersistenceFailed)
-    
-    ok()
-
-proc has*(db: Database, key: seq[byte]): bool =
-    ## Check whether a value has been set for a key.
-    ## 
-    ## **Example:**
-    ## 
-    ## .. code-block::
-    ##   let key = @[byte 1, 2, 3, 4]
-    ##   db.set(key, @[byte 4, 3, 2, 1]])
-    ##   assert(db.has(key))
-    db.tree.contains(string.fromBytes(key))
-
-proc tag*(db: Database, key: seq[byte], tag: seq[byte]) =
-    ## Adds a tag to a specific key.
-    ##
-    ## Example:
-    ##
-    ## .. code-block::
-    ##   let key = @[byte 1, 2, 3, 4]
-    ##   db.set(key, @[byte 1, 2, 3, 4, 5])
-    ##   db.tag(key, @[byte 1, 2, 3])
-    let t = string.fromBytes(tag)
-    discard db.tags.hasKeyOrPut(t, initHashSet[seq[byte]]())
-
-    # @TODO, Tag incl must be logged
-
-    db.tags[t].incl(key)
-
-proc tags*(db: Database): seq[seq[byte]] =
-    ## Returns all the tags currently stored in the database.
-    discard
-
-iterator filter*(db: Database, tag: seq[byte]): (seq[byte], seq[byte]) =
-    ## Returns all K, V pairs that have been tagged.
-    discard
-
-iterator intersection*(db: Database, tags: seq[seq[byte]]): (seq[byte], seq[byte]) =
-    ## Returns all K, V pairs that are in the intersection of the passed tags.
-    discard
-
-iterator union*(db: Database, tags: seq[seq[byte]]): (seq[byte], seq[byte]) =
-    ## Returns all K, V pairs that are the union of the passed tags.
-    discard

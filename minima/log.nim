@@ -9,7 +9,7 @@ type
     LogType* = enum
         Unknown = -1,
         Value = 0,
-        Topic = 1
+        Tag = 1
 
     ## Log represents the the Write-Ahead Log used for persisting the KV Database.
     Log* = ref object of RootObj
@@ -69,7 +69,7 @@ proc toLogType(arr: openArray[byte] | array[1, byte]): LogType =
         of 0:
             LogType.Value
         of 1:
-            LogType.Topic
+            LogType.Tag
         else:
             LogType.Unknown
 
