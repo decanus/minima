@@ -164,7 +164,7 @@ proc tag*(db: Database, tag: seq[byte], key: seq[byte]) =
     ## .. code-block::
     ##   let key = @[byte 1, 2, 3, 4]
     ##   db.set(key, @[byte 1, 2, 3, 4, 5])
-    ##   db.tag(key, @[byte 1, 2, 3])
+    ##   db.tag(@[byte 1, 2, 3], key)
     let t = string.fromBytes(tag)
     discard db.tags.hasKeyOrPut(t, initHashSet[string]())
 
