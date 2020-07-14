@@ -5,13 +5,12 @@
 
 ## This module implements Minima's basic key value database.
 
-import stew/[results, byteutils, endians2], os, tree, sequtils, tables, sets
+import stew/[results, byteutils], os, tree, log, nimcrypto, tables, sets
 
 type 
     ## Database object
     Database* = ref object
-        dir: string # @TODO: we probably want this somehow else.
-        log: File
+        log: Log
         tree: BTree[string, seq[byte]]
 
         tags: Table[string, HashSet[seq[byte]]]
@@ -22,38 +21,62 @@ type
         KeyNotFound             = "minima: key not found"
         PersistenceFailed       = "minima: persistence failed"
 
-proc log(db: Database, key: seq[byte], value: seq[byte]) =
-    let write = concat(
-        @(uint32(len(key)).toBytes),
-        @(uint32(len(value)).toBytes),
-        key,
-        value
+proc toAESKey*(str: string): array[aes256.sizeKey, byte] =
+    ## Concerts a string to an AES Key for opening an encrypted database.
+    ## 
+    ## **Example:**
+    ##
+    ## .. code-block::
+    ##   let password = "foo".toAESKey
+    doAssert len(str) <= 32
+    var pass = str
+    var key: array[32, byte]
+    copyMem(addr key[0], addr pass[0], len(pass))
+
+    return key
+
+proc init*(T: type Database, log: Log): T =
+    ## Init creates a Database.
+    ## 
+    ## **Example:**
+    ##
+    ## .. code-block::
+    ##   let db = Database.init(StandardLog.init(file))
+    result = T(
+        log: log,
+        tree: initBTree[string, seq[byte]]()
     )
 
-    # @TODO CATCH EXCEPTIONS
-    discard db.log.writeBytes(write, 0, len(write))
-    db.log.flushFile()
+    for (t, key, val) in result.log.pairs():
+        if t == LogType.Value:
+            result.tree.add(string.fromBytes(key), val)
+        elif t == LogType.Topic:
+            # @TODO
+            discard
 
-proc readInt(file: File): int =
-    var arr: array[4, byte]
-    discard file.readBytes(arr, 0, 4)
+proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, DatabaseError] =
+    ## Opens an encrypted database at the specified path.
+    ## 
+    ## **Example:**
+    ##
+    ## .. code-block::
+    ##   let result = open("/tmp/minima", "password".toAESKey)
+    ##   if not result.isOk:
+    ##     return
+    try:
+        os.createDir(dir)
+    except:
+        return err(DirectoryCreationFailed)
 
-    return int(uint32.fromBytes(arr))
+    var path = dir / "minima.db"
+    var mode = fmReadWrite
+    if fileExists(path):
+        mode = fmReadWriteExisting
 
-proc recover(db: Database) =
-    while db.log.getFilePos() <= db.log.getFileSize() - 1:
-        var keyLen = readInt(db.log)
-        var valLen = readInt(db.log)
+    var f = try: open(path, mode)
+        except CatchableError: return err(TreeFileCreationFailed)
 
-        # @TODO CATCH EXCEPTIONS
-
-        var key = newSeq[byte](keyLen)
-        discard db.log.readBytes(key, 0, keyLen)
-
-        var val = newSeq[byte](valLen)
-        discard db.log.readBytes(val, 0, valLen)
-
-        db.tree.add(string.fromBytes(key), val)
+    ok(Database.init(EncryptedLog.init(f, key)))
 
 # @TODO: Maybe move this func to ../minima.nim
 proc open*(dir: string): Result[Database, DatabaseError] =
@@ -66,33 +89,20 @@ proc open*(dir: string): Result[Database, DatabaseError] =
     ##   let result = open("/tmp/minima")
     ##   if not result.isOk:
     ##     return
-    if not os.existsDir(dir):
-        try:
-            os.createDir(dir)
-        except:
-            return err(DirectoryCreationFailed)
+    try:
+        os.createDir(dir)
+    except:
+        return err(DirectoryCreationFailed)
 
-    var path = dir & "/minima.db"
+    var path = dir / "minima.db"
     var mode = fmReadWrite
     if fileExists(path):
         mode = fmReadWriteExisting
 
-    var log: File
-    try:
-        log = open(path, mode)
-    except:
-        return err(TreeFileCreationFailed)
+    var f = try: open(path, mode)
+        except CatchableError: return err(TreeFileCreationFailed)
 
-    var db = Database(
-        dir: dir,
-        log: log,
-        tree: initBTree[string, seq[byte]]()
-    )
-
-    if mode == fmReadWriteExisting:
-        recover(db)
-
-    ok(db)
+    ok(Database.init(StandardLog.init(f)))
 
 proc close*(db: Database) =
     ## Closes the database.
@@ -127,8 +137,8 @@ proc set*(db: Database, key: seq[byte], value: seq[byte]): Result[void, Database
     db.tree.add(string.fromBytes(key), value)
 
     try:
-        log(db, key, value)
-    except:
+        db.log.log(LogType.Value, key, value)
+    except CatchableError:
         return err(PersistenceFailed)
     
     ok()
