@@ -54,6 +54,14 @@ iterator range*[Key, Val](b: BTree[Key, Val], first: Key, last: Key): Val =
             else: 
                 break
 
+
+    # iterate(n: node) =
+    # for e in node.entries:
+    # if e is internal:
+    #   iterate(n)
+    # else:
+    #   yield all values
+
     # echo "finding ", uint64.fromBytes(first.toBytes), " ", uint64.fromBytes(last.toBytes)
     var x = b.root
     # for i in 0..<x.entries:
