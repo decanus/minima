@@ -116,28 +116,49 @@ proc testRange(fn: InitProc) =
     
     var i = 0
     while i <= M*3:
-        let uint64(i).toBytes
-        discard db.set(@[byte 1, 2, 3, 3], @[byte 1, 2, 3, 3])
+        let b = @(uint64(i).toBytes)
+        discard db.set(b, b)
         inc(i)
 
-    echo i
+    let 
+        first = M - 5
+        last = M + 3
+        firstKey = @(uint64(first).toBytes)
+        lastKey = @(uint64(last).toBytes)
+        diff = last - first
 
-    discard db.set(@[byte 1, 2, 3, 3], @[byte 1, 2, 3, 3])
-    discard db.set(@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 4])
-    discard db.set(@[byte 1, 2, 3, 5], @[byte 1, 2, 3, 5])
-    discard db.set(@[byte 1, 2, 3, 6], @[byte 1, 2, 3, 6])
-    discard db.set(@[byte 1, 2, 3, 7], @[byte 1, 2, 3, 7])
-
-    i = 0
-    for v in db.range(@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 6]):
+    var c = 0
+    for v in db.range(firstKey, lastKey):
+        echo uint64.fromBytes(v)
         check:
-            v == @[byte 1, 2, 3, uint8(4 + i)]
-
-        inc(i)
+            v == @(uint64(first + c).toBytes())
+        inc(c)
 
     check:
-        i == 3
+        c == diff
 
+proc testSetAndGetMany(fn: InitProc) =
+    let db = fn()
+
+    var i = 0
+    while i <= M*3:
+        let b = @(uint64(i).toBytes)
+        var res = db.set(b, b)
+        check:
+            res.isOk
+
+        inc(i)
+
+    i = 0
+    while i <= M*3:
+        let b = @(uint64(i).toBytes)
+        var res = db.get(b)
+        check:
+            res.isOk
+            res.value == b
+
+        inc(i)
+ 
 suite "Encrypted Database Test Suite":
     teardown:
         removeFile(DatabasePath & "/minima.db")
@@ -160,6 +181,9 @@ suite "Encrypted Database Test Suite":
     test "range returns correct values":
         testRange(createEncryptedDatabase)
 
+    test "set and get many":
+        testSetAndGetMany(createEncryptedDatabase)
+
 suite "Database Test Suite":
     teardown:
         removeFile("/tmp/minima.db")
@@ -181,3 +205,6 @@ suite "Database Test Suite":
 
     test "range returns correct values":
         testRange(createDatabase)
+
+    test "set and get many":
+        testSetAndGetMany(createDatabase)

@@ -6,6 +6,8 @@
 # Note: this was copied from the nim compiler, basic B-Tree implementation.
 # In the future we may want to use BW-Trees.
 
+import stew/[byteutils, endians2]
+
 const
     M* = 512 # max children per B-tree node = M-1
             # (must be even and greater than 2)
@@ -43,21 +45,18 @@ proc getOrDefault*[Key, Val](b: BTree[Key, Val], key: Key): Val =
         if eq(key, x.keys[j]): return x.vals[j]
 
 iterator range*[Key, Val](b: BTree[Key, Val], first: Key, last: Key): Val =
+    # echo "finding ", uint64.fromBytes(first.toBytes), " ", uint64.fromBytes(last.toBytes)
     var x = b.root
-    while x.isInternal:
-        for j in 0..<x.entries:
-            if j+1 == x.entries or less(last, x.keys[j+1]):
-                # @TODO x cannot be x here
-                # Like if we are at the lowest level and it has no links, it will still try to get them.
-                var s = x.links[j]
-                for j in 0..<s.entries:
-                    if cmp(s.keys[j], first) >= 0:
-                        if cmp(s.keys[j], last) <= 0:
-                            yield s.vals[j]
-                        else:
-                            break
-
-                x = s
+    # for i in 0..<x.entries:
+    #     echo uint64.fromBytes(x.keys[i].toBytes)
+    #     if i+1 == x.entries or less(first, x.keys[i+1]):
+    #         echo "ent ", x.entries
+    #         for j in 0..<x.entries:
+    #             if cmp(x.keys[j], first) >= 0:
+    #                 if cmp(x.keys[j], last) <= 0:
+    #                     yield x.vals[j]
+    #                 else:
+    #                     break
 
     for j in 0..<x.entries:
         if cmp(x.keys[j], first) >= 0:
