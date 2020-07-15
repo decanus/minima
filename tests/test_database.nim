@@ -1,6 +1,6 @@
 import unittest
 
-import ../minima/database, stew/[results, byteutils], os, sequtils
+import ../minima/[database, tree], stew/[results, byteutils], os, sequtils
 
 type
     InitProc = proc (): Database
@@ -125,8 +125,8 @@ proc testRange(fn: InitProc) =
         check:
             v == @[byte 1, 2, 3, uint8(4 + i)]
 
-        i += 1
-        
+        inc(i)
+
     check:
         i == 3
 

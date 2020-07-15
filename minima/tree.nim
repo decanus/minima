@@ -7,7 +7,7 @@
 # In the future we may want to use BW-Trees.
 
 const
-    M = 512 # max children per B-tree node = M-1
+    M* = 512 # max children per B-tree node = M-1
             # (must be even and greater than 2)
     Mhalf = M div 2
 
@@ -43,21 +43,18 @@ proc getOrDefault*[Key, Val](b: BTree[Key, Val], key: Key): Val =
         if eq(key, x.keys[j]): return x.vals[j]
 
 iterator range*[Key, Val](b: BTree[Key, Val], first: Key, last: Key): Val =
-    # var x = b.root
-    # while x.isInternal:
-    #     echo "inside"
-    #     for j in 0..<x.entries:
-    #         echo j
-    #         if j+1 == x.entries or less(first, x.keys[j+1]):
-    #             echo "ok"
-    #             x = x.links[j]
-    #             for j in 0..<x.entries:
-    #                 if greater(first, x.keys[j]): yield x.vals[j]
-
-
-    # @TODO, THIS WILL NOT WORK WITH SPLIT TREES
-
     var x = b.root
+    while x.isInternal:
+        for j in 0..<x.entries:
+            if j+1 == x.entries or less(first, x.keys[j+1]):
+                x = x.links[j]
+                for j in 0..<x.entries:
+                    if cmp(x.keys[j], first) >= 0:
+                        if cmp(x.keys[j], last) <= 0:
+                            yield x.vals[j]
+                        else:
+                            break
+
     for j in 0..<x.entries:
         if cmp(x.keys[j], first) >= 0:
             if cmp(x.keys[j], last) <= 0:
