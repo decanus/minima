@@ -42,6 +42,29 @@ proc getOrDefault*[Key, Val](b: BTree[Key, Val], key: Key): Val =
     for j in 0..<x.entries:
         if eq(key, x.keys[j]): return x.vals[j]
 
+iterator range*[Key, Val](b: BTree[Key, Val], first: Key, last: Key): Val =
+    # var x = b.root
+    # while x.isInternal:
+    #     echo "inside"
+    #     for j in 0..<x.entries:
+    #         echo j
+    #         if j+1 == x.entries or less(first, x.keys[j+1]):
+    #             echo "ok"
+    #             x = x.links[j]
+    #             for j in 0..<x.entries:
+    #                 if greater(first, x.keys[j]): yield x.vals[j]
+
+
+    # @TODO, THIS WILL NOT WORK WITH SPLIT TREES
+
+    var x = b.root
+    for j in 0..<x.entries:
+        if cmp(x.keys[j], first) >= 0:
+            if cmp(x.keys[j], last) <= 0:
+                yield x.vals[j]
+            else:
+                break
+
 proc contains*[Key, Val](b: BTree[Key, Val], key: Key): bool =
     var x = b.root
     while x.isInternal:

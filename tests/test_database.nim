@@ -111,6 +111,25 @@ proc testCanOverWriteValues(fn: InitProc) =
     check:
         res.value == @[byte 1, 2]
 
+proc testRange(fn: InitProc) =
+    let db = fn()
+    
+    discard db.set(@[byte 1, 2, 3, 3], @[byte 1, 2, 3, 3])
+    discard db.set(@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 4])
+    discard db.set(@[byte 1, 2, 3, 5], @[byte 1, 2, 3, 5])
+    discard db.set(@[byte 1, 2, 3, 6], @[byte 1, 2, 3, 6])
+    discard db.set(@[byte 1, 2, 3, 7], @[byte 1, 2, 3, 7])
+
+    var i = 0
+    for v in db.range(@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 6]):
+        check:
+            v == @[byte 1, 2, 3, uint8(4 + i)]
+
+        i += 1
+        
+    check:
+        i == 3
+
 suite "Encrypted Database Test Suite":
     teardown:
         removeFile(DatabasePath & "/minima.db")
@@ -130,6 +149,9 @@ suite "Encrypted Database Test Suite":
     test "can overwrite values":
         testCanOverWriteValues(createEncryptedDatabase)
 
+    test "range returns correct values":
+        testRange(createEncryptedDatabase)
+
 suite "Database Test Suite":
     teardown:
         removeFile("/tmp/minima.db")
@@ -148,3 +170,6 @@ suite "Database Test Suite":
 
     test "can overwrite values":
         testCanOverWriteValues(createDatabase)
+
+    test "range returns correct values":
+        testRange(createDatabase)
