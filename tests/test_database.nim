@@ -1,6 +1,6 @@
 import unittest
 
-import ../minima/[database, tree], stew/[results, byteutils], os, sequtils
+import ../minima/[database, tree], stew/[results, byteutils, endians2], os, sequtils
 
 type
     InitProc = proc (): Database
@@ -113,7 +113,7 @@ proc testCanOverWriteValues(fn: InitProc) =
 
 proc testRange(fn: InitProc) =
     let db = fn()
-    
+
     discard db.set(@[byte 1, 2, 3, 3], @[byte 1, 2, 3, 3])
     discard db.set(@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 4])
     discard db.set(@[byte 1, 2, 3, 5], @[byte 1, 2, 3, 5])
@@ -130,6 +130,28 @@ proc testRange(fn: InitProc) =
     check:
         i == 3
 
+proc testSetAndGetMany(fn: InitProc) =
+    let db = fn()
+
+    var i = 0
+    while i <= M*3:
+        let b = @(uint64(i).toBytes)
+        var res = db.set(b, b)
+        check:
+            res.isOk
+
+        inc(i)
+
+    i = 0
+    while i <= M*3:
+        let b = @(uint64(i).toBytes)
+        var res = db.get(b)
+        check:
+            res.isOk
+            res.value == b
+
+        inc(i)
+ 
 suite "Encrypted Database Test Suite":
     teardown:
         removeFile(DatabasePath & "/minima.db")
@@ -152,6 +174,9 @@ suite "Encrypted Database Test Suite":
     test "range returns correct values":
         testRange(createEncryptedDatabase)
 
+    test "set and get many":
+        testSetAndGetMany(createEncryptedDatabase)
+
 suite "Database Test Suite":
     teardown:
         removeFile("/tmp/minima.db")
@@ -173,3 +198,6 @@ suite "Database Test Suite":
 
     test "range returns correct values":
         testRange(createDatabase)
+
+    test "set and get many":
+        testSetAndGetMany(createDatabase)

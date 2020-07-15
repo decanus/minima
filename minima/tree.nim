@@ -46,14 +46,18 @@ iterator range*[Key, Val](b: BTree[Key, Val], first: Key, last: Key): Val =
     var x = b.root
     while x.isInternal:
         for j in 0..<x.entries:
-            if j+1 == x.entries or less(first, x.keys[j+1]):
-                x = x.links[j]
-                for j in 0..<x.entries:
-                    if cmp(x.keys[j], first) >= 0:
-                        if cmp(x.keys[j], last) <= 0:
-                            yield x.vals[j]
+            if j+1 == x.entries or less(last, x.keys[j+1]):
+                # @TODO x cannot be x here
+                # Like if we are at the lowest level and it has no links, it will still try to get them.
+                var s = x.links[j]
+                for j in 0..<s.entries:
+                    if cmp(s.keys[j], first) >= 0:
+                        if cmp(s.keys[j], last) <= 0:
+                            yield s.vals[j]
                         else:
                             break
+
+                x = s
 
     for j in 0..<x.entries:
         if cmp(x.keys[j], first) >= 0:
