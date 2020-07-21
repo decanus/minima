@@ -151,3 +151,19 @@ proc has*(db: Database, key: Key): bool =
     ##   db.set(key, @[byte 4, 3, 2, 1]])
     ##   assert(db.has(key))
     db.tree.contains(string.fromBytes(key))
+
+iterator range*(db: Database, first: Key, last: Key): Value =
+    ## Iterates through all values in a given range.
+    ## This function is inclusive of both the `first` and `last` key.
+    ## 
+    ## **Example:**
+    ## 
+    ## .. code-block::
+    ##   db.set(@[byte 1, 2, 3, 4], @[byte 4, 3, 2, 1])
+    ##   db.set(@[byte 1, 2, 3, 5], @[byte 4, 3, 2, 1])
+    ##   db.set(@[byte 1, 2, 3, 6], @[byte 4, 3, 2, 1])
+    ## 
+    ##   for v in db.range(@[byte 1, 2, 3, 4], @[byte 1, 2, 3, 6]):
+    ##     echo v
+    for v in db.tree.range(string.fromBytes(first), string.fromBytes(last)):
+        yield v

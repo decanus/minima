@@ -1,6 +1,6 @@
 import unittest
 
-import ../minima/database, stew/[results, byteutils], os, sequtils
+import ../minima/[database, tree], stew/[results, byteutils, endians2], os, sequtils
 
 type
     InitProc = proc (): Database
@@ -111,6 +111,54 @@ proc testCanOverWriteValues(fn: InitProc) =
     check:
         res.value == @[byte 1, 2]
 
+proc testRange(fn: InitProc) =
+    let db = fn()
+    
+    var i = 0
+    while i <= M*3:
+        let b = @(uint64(i).toBytes)
+        discard db.set(b, b)
+        inc(i)
+
+    let 
+        first = M - 5
+        last = M + 3
+        firstKey = @(uint64(first).toBytes)
+        lastKey = @(uint64(last).toBytes)
+        diff = last - first
+
+    var c = 0
+    for v in db.range(firstKey, lastKey):
+        echo uint64.fromBytes(v)
+        check:
+            v == @(uint64(first + c).toBytes())
+        inc(c)
+
+    check:
+        c == diff
+
+proc testSetAndGetMany(fn: InitProc) =
+    let db = fn()
+
+    var i = 0
+    while i <= M*3:
+        let b = @(uint64(i).toBytes)
+        var res = db.set(b, b)
+        check:
+            res.isOk
+
+        inc(i)
+
+    i = 0
+    while i <= M*3:
+        let b = @(uint64(i).toBytes)
+        var res = db.get(b)
+        check:
+            res.isOk
+            res.value == b
+
+        inc(i)
+ 
 suite "Encrypted Database Test Suite":
     teardown:
         removeFile(DatabasePath & "/minima.db")
@@ -130,6 +178,12 @@ suite "Encrypted Database Test Suite":
     test "can overwrite values":
         testCanOverWriteValues(createEncryptedDatabase)
 
+    test "range returns correct values":
+        testRange(createEncryptedDatabase)
+
+    test "set and get many":
+        testSetAndGetMany(createEncryptedDatabase)
+
 suite "Database Test Suite":
     teardown:
         removeFile("/tmp/minima.db")
@@ -148,3 +202,9 @@ suite "Database Test Suite":
 
     test "can overwrite values":
         testCanOverWriteValues(createDatabase)
+
+    test "range returns correct values":
+        testRange(createDatabase)
+
+    test "set and get many":
+        testSetAndGetMany(createDatabase)
