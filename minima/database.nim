@@ -23,6 +23,8 @@ type
 
 proc toAESKey*(str: string): array[aes256.sizeKey, byte] =
     ## Concerts a string to an AES Key for opening an encrypted database.
+    ##
+    ## *This is not considered safe, an AES key should instead be generated.**
     ## 
     ## **Example:**
     ##
