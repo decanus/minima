@@ -6,6 +6,11 @@
 import sequtils, stew/endians2, nimcrypto, random
 
 type 
+    LogType* = enum
+        Unknown = -1,
+        Value = 0,
+        Tag = 1
+
     ## Log represents the the Write-Ahead Log used for persisting the KV Database.
     Log* = ref object of RootObj
         file: File
@@ -18,20 +23,20 @@ method close*(log: Log) {.base.} =
     ## Closes the log file.
     log.file.close()
 
-method log*(log: Log, key: seq[byte], value: seq[byte]) {.base.} =
+method log*(log: Log, logType: LogType, key: seq[byte], value: seq[byte]) {.base.} =
     ## Writes a key, value pair to the Write-Ahead Log.
     discard
 
-method next*(log: Log): (seq[byte], seq[byte]) {.base.} =
+method next*(log: Log): (LogType, seq[byte], seq[byte]) {.base.} =
     ## Next gets the next key, value pair from the log.
     discard
 
-iterator pairs*(log: Log): (seq[byte], seq[byte]) =
+iterator pairs*(log: Log): (LogType, seq[byte], seq[byte]) =
     ## Pairs is an iterator that iterates through all the pairs in the Write-Ahead Log.
     let fileSize = log.file.getFileSize()
     while log.file.getFilePos() < fileSize:
-        var (k, v) = log.next()
-        yield (k, v)
+        var (t, k, v) = log.next()
+        yield (t, k, v)
 
 proc readInt(file: File): int =
     var arr: array[4, byte]
@@ -39,8 +44,9 @@ proc readInt(file: File): int =
 
     return int(uint32.fromBytes(arr))
 
-func pack(key, value: seq[byte]): seq[byte] =
+func pack(logType: LogType, key, value: seq[byte]): seq[byte] =
     concat(
+        @(uint8(logType).toBytes),
         @(uint32(len(key)).toBytes),
         @(uint32(len(value)).toBytes),
         key,
@@ -51,14 +57,26 @@ proc init*(T: type StandardLog, file: File): T =
     ## Returns a new Log.
     result = T(file: file)
 
-method log*(log: StandardLog, key: seq[byte], value: seq[byte]) =
-    let write = pack(key, value)
+method log*(log: StandardLog, logType: LogType, key: seq[byte], value: seq[byte]) =
+    let write = pack(logType, key, value)
     # @TODO CATCH EXCEPTIONS
 
     discard log.file.writeBytes(write, 0, len(write))
     log.file.flushFile()
 
-method next*(log: StandardLog): (seq[byte], seq[byte]) =
+proc toLogType(arr: openArray[byte] | array[1, byte]): LogType =
+    result =  case uint8.fromBytes(arr):
+        of 0:
+            LogType.Value
+        of 1:
+            LogType.Tag
+        else:
+            LogType.Unknown
+
+method next*(log: StandardLog): (LogType, seq[byte], seq[byte]) =
+    var arr: array[1, byte]
+    discard log.file.readBytes(arr, 0, 1)
+
     let keyLen = readInt(log.file)
     let valLen = readInt(log.file)
 
@@ -70,7 +88,7 @@ method next*(log: StandardLog): (seq[byte], seq[byte]) =
     var val = newSeq[byte](valLen)
     discard log.file.readBytes(val, 0, valLen)
 
-    return (key, val)
+    return (arr.toLogType(), key, val)
 
 proc init*(T: type EncryptedLog, file: File, key: array[aes256.sizeKey, byte]): T =
     ## Returns a new Encrypted Log that is encrypted using the key.
@@ -82,9 +100,9 @@ proc randomIV(): array[aes256.sizeBlock, byte] =
     for i in 0 ..< result.len:
         result[i] = byte(rand(256))
 
-method log*(log: EncryptedLog, key: seq[byte], value: seq[byte]) =
+method log*(log: EncryptedLog, logType: LogType, key: seq[byte], value: seq[byte]) =
     let 
-        packet = pack(key, value) 
+        packet = pack(logType, key, value) 
         iv = randomIV()
 
     var encrypt: CTR[aes256]
@@ -98,7 +116,7 @@ method log*(log: EncryptedLog, key: seq[byte], value: seq[byte]) =
     discard log.file.writeBytes(write, 0, len(write))
     log.file.flushFile()
 
-method next*(log: EncryptedLog): (seq[byte], seq[byte]) =
+method next*(log: EncryptedLog): (LogType, seq[byte], seq[byte]) =
     let encryptedLen = readInt(log.file)
 
     var iv: array[aes256.sizeBlock, byte]
@@ -113,14 +131,15 @@ method next*(log: EncryptedLog): (seq[byte], seq[byte]) =
     decrypt.init(log.key, iv)
     decrypt.decrypt(encrypted, data)
 
-    let keyLen = uint32.fromBytes(data.toOpenArray(0, 3))
-    let valLen = uint32.fromBytes(data.toOpenArray(4, 7))
+    let keyLen = uint32.fromBytes(data.toOpenArray(1, 4))
+    let valLen = uint32.fromBytes(data.toOpenArray(5, 8))
 
-    let keyEnd = 8 + int(keyLen - 1)
+    let keyEnd = 9 + int(keyLen - 1)
     let valStart = keyEnd + 1
 
     return (
-        @(data.toOpenArray(8, keyEnd)),
+        data.toOpenArray(0, 1).toLogType(),
+        @(data.toOpenArray(9, keyEnd)),
         @(data.toOpenArray(valStart, valStart + int(valLen - 1)))
     )
 

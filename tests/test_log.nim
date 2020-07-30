@@ -34,13 +34,14 @@ suite "Encrypted Log Test":
         let key = @[byte 1, 2, 3, 4]
         let value = @[byte 1, 2, 3, 4, 5]
 
-        log.log(key, value)
+        log.log(LogType.Value, key, value)
         log.close()
 
         log = createEncryptedLog()
 
-        for (k, v) in log.pairs():
+        for (t, k, v) in log.pairs():
             check:
+                t == LogType.Value
                 k == key
                 v == value
 
@@ -54,12 +55,13 @@ suite "Log Test":
         let key = @[byte 1, 2, 3, 4]
         let value = @[byte 1, 2, 3, 4, 5]
 
-        log.log(key, value)
+        log.log(LogType.Value, key, value)
         log.close()
 
         log = createStandardLog()
 
-        for (k, v) in log.pairs():
+        for (t, k, v) in log.pairs():
             check:
+                t == LogType.Value
                 k == key
                 v == value

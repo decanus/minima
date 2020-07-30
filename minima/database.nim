@@ -5,7 +5,7 @@
 
 ## This module implements Minima's basic key value database.
 
-import stew/[results, byteutils], os, tree, log, nimcrypto
+import stew/[results, byteutils], os, tree, log, nimcrypto, tables, sets
 
 type 
     Key* = seq[byte]
@@ -14,6 +14,8 @@ type
     Database* = ref object
         log: Log
         tree: BTree[string, Value]
+
+        tags: Table[string, HashSet[string]]
 
     DatabaseError* = enum
         DirectoryCreationFailed = "minima: failed to create db directory"
@@ -49,8 +51,14 @@ proc init*(T: type Database, log: Log): T =
         tree: initBTree[string, Value]()
     )
 
-    for (key, val) in result.log.pairs():
-        result.tree.add(string.fromBytes(key), val)
+    for (t, key, val) in result.log.pairs():
+        if t == LogType.Value:
+            result.tree.add(string.fromBytes(key), val)
+        elif t == LogType.Tag:
+            #result.tag(key, val)
+            # can't use tag function because it logs
+            # @TODO
+            discard
 
 proc open*(dir: string, key: array[aes256.sizeKey, byte]): Result[Database, DatabaseError] =
     ## Opens an encrypted database at the specified path.
@@ -135,7 +143,7 @@ proc set*(db: Database, key: Key, value: Value): Result[void, DatabaseError] =
     db.tree.add(string.fromBytes(key), value)
 
     try:
-        db.log.log(key, value)
+        db.log.log(LogType.Value, key, value)
     except CatchableError:
         return err(PersistenceFailed)
     
@@ -151,3 +159,34 @@ proc has*(db: Database, key: Key): bool =
     ##   db.set(key, @[byte 4, 3, 2, 1]])
     ##   assert(db.has(key))
     db.tree.contains(string.fromBytes(key))
+
+proc tag*(db: Database, tag: seq[byte], key: seq[byte]) =
+    ## Adds a tag to a specific key.
+    ##
+    ## Example:
+    ##
+    ## .. code-block::
+    ##   let key = @[byte 1, 2, 3, 4]
+    ##   db.set(key, @[byte 1, 2, 3, 4, 5])
+    ##   db.tag(@[byte 1, 2, 3], key)
+    let t = string.fromBytes(tag)
+    discard db.tags.hasKeyOrPut(t, initHashSet[string]())
+
+    db.log.log(LogType.Tag, tag, key)
+    db.tags[t].incl(string.fromBytes(key))
+
+proc tags*(db: Database): seq[seq[byte]] =
+    ## Returns all the tags currently stored in the database.
+    discard
+
+iterator filter*(db: Database, tag: seq[byte]): (seq[byte], seq[byte]) =
+    ## Returns all K, V pairs that have been tagged.
+    discard
+
+iterator intersection*(db: Database, tags: seq[seq[byte]]): (seq[byte], seq[byte]) =
+    ## Returns all K, V pairs that are in the intersection of the passed tags.
+    discard
+
+iterator union*(db: Database, tags: seq[seq[byte]]): (seq[byte], seq[byte]) =
+    ## Returns all K, V pairs that are the union of the passed tags.
+    discard
